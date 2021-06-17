@@ -3,7 +3,7 @@ const app = express();
 
 app.use(express.static(__dirname + '/public'));
 
-function forceHttps(req, res, next){
+function forceHttps(req, res, next){ // ミドルウェア関数
   if (!process.env.PORT) {
     return next();
   };
@@ -12,6 +12,7 @@ function forceHttps(req, res, next){
     // リクエストURLのプロトコル部分だけhttpsにしてリダイレクトさせる
     res.redirect('https://' + req.headers.host + req.url);
   }else {
+    console.log('forceHttps passed.');
     return next();
   }
 };
@@ -21,6 +22,11 @@ app.all('*', forceHttps); // ドメインのどのパスにアクセスしても
 app.get('/', function(req, res) {
   res.sendFile(__dirname + '/public/index1.html');
 });
+
+app.get('/auth', function(req, res) {
+  console.log(`request:${toString(req)}`)
+  console.log(``)
+})
 
 app.set('port', (process.env.PORT || 5000));
 
