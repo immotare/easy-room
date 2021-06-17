@@ -25,7 +25,6 @@ app.get('/', function(req, res) {
 
 app.get('/auth', function(req, res) {
   console.log(`request:${toString(req)}`)
-  console.log(``)
 })
 
 app.set('port', (process.env.PORT || 5000));
