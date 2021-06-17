@@ -12,6 +12,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "express": "^latest"
+    "express": "4.17.1"
   }
 }
