@@ -1,30 +1,45 @@
 const express = require('express');
+const got = require('got');
 const app = express();
 
 app.use(express.static(__dirname + '/public'));
 
-function forceHttps(req, res, next){ // ミドルウェア関数
+const slackSecretKey = process.env.SLACK_SECRET;
+const slackClientId = process.env.SLACK_CLIENT;
+
+function forceHttps(req, res, next){
   if (!process.env.PORT) {
     return next();
   };
 
   if (req.headers['x-forwarded-proto'] && req.headers['x-forwarded-proto'] === "http") {
-    // リクエストURLのプロトコル部分だけhttpsにしてリダイレクトさせる
     res.redirect('https://' + req.headers.host + req.url);
   }else {
-    console.log('forceHttps passed.');
     return next();
   }
 };
 
-app.all('*', forceHttps); // ドメインのどのパスにアクセスしてもhttpsにリダイレクトさせる
+// ドメインのどのパスにアクセスしてもhttpsにリダイレクトさせる
+app.all('*', forceHttps); 
 
 app.get('/', function(req, res) {
   res.sendFile(__dirname + '/public/index1.html');
 });
 
 app.get('/auth', function(req, res) {
-  console.log(`request:${toString(req)}`)
+  res.send(req.query.code)
+  // try {
+  //   let slackCode = req.query.code;
+  //   let slackTokenRequestUrl = `https://slack.com/api/oauth.access?client_id=${slackClientId}&client_secret=${slackSecretKey}&code=${slackCode}`;
+  //   let slackTokenResponse = await got(slackTokenRequestUrl, {json:true});
+  //   let token = slackTokenResponse.body['access_token'];
+  //   if (!token) {
+  //     res.send('Oops! Something went wrong.');
+  //     return;
+  //   }
+  // }
+  // catch {
+  // }
 })
 
 app.set('port', (process.env.PORT || 5000));
