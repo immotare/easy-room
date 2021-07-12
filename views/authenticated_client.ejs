@@ -1,0 +1,60 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>easy-room</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <script src="https://cdn.webrtc.ecl.ntt.com/skyway-4.4.1.js"></script>
+  </head>
+  <body>
+    <img src=<%- clientData.userimgurl %>>
+    <p id="username"><%= clientData.username %></p>
+    <input type="text" id="roomname">
+    <button id="connectbtn" onclick="connectRoom()">切断</button>
+    <button id="disconnectbtn" onclick="disconnectRoom()">接続</button>
+  </body>
+  <li>
+  </li>
+  <script type="application/json" id="credential">
+    <%= clientData.credential%>
+  </script>
+  <script type="text/javascript">
+    let peer = null;
+    let joinedSfuRoom = null;
+    let localStream = null;
+    const credential = JSON.parse(document.getElementById("credential").textContent);
+
+    function connectRoom() {
+      const roomName = document.getElementById("roomname").value;
+      if (!roomName) {
+        alert("ルーム名を入力してください");
+        return;
+      }
+
+      if (!peer) {
+        peer = new Peer({
+          key: <%= apiKey %>
+          config: credential
+        });
+        peer.on("open", (id) => {
+          console.log(`successfully connected: id=${id}`);
+        });
+        peer.on("error", (error) => {
+          console.log(`${error.type}: ${error.message}`);
+        });
+      }
+
+      joinedSfuRoom = peer.joinRoom(roomName, {
+        mode: "sfu",
+        stream: localStream
+      });
+      joinedSfuRoom.on("open", () => {
+        // TODO:ルーム作成時の処理
+      });
+      joinedSfuRoom.on("peerJoin", (peerId) => {
+        const joinedUserName = peerId.substring(0,peerId.length - 36);
+        alert(`Joined ${joinedUserName}!`);
+      });
+    }
+  </script>
+</html>
