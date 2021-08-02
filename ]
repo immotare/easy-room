@@ -72,22 +72,13 @@
 			});
 
       joinedSfuRoom.on("peerLeave", (peerId) => {
-        console.log("peer leaved.");
+        console.log("peer leaved.");w
         removeMemberList([peerId]);
       });
 
       joinedSfuRoom.on("close", () => {
         console.log("close event emitted.");
         removeMemberList([joinedSfuRoom.members])
-      });
-
-      joinedSfuRoom.on("stream", (stream) => {
-        console.log("detect remote stream");
-        const memberAudio = document.createElement("audio");
-        memberAudio.id = "audio-"+stream.peerId;
-        memberAudio.srcObject = stream;
-        document.body.appendChild(memberAudio);
-        memberAudio.play();
       });
 		}
 

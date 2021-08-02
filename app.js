@@ -9,6 +9,7 @@ app.use(express.static(__dirname + '/public'));
 app.set("view engine", "ejs");
 app.set("views", "./views");
 
+let req_count = 0;
 const slackSecretKey = process.env.SLACK_SECRET;
 const slackClientId = process.env.SLACK_CLIENT;
 const skywaySecretKey = process.env.SKYWAY_SECRET;
@@ -89,13 +90,14 @@ app.get('/auth', async function(req, res) {
 })
 
 app.get('/testclient', function (req, res) {
-    const credentialInfo = makeCredentialInfo('sample_user');
-    const clientData = {
-      username: 'sample_user',
-      credential: credentialInfo.credential,
-      peerId: credentialInfo.peerId
-    };
-    res.render("./authenticated_client.ejs", { clientdata: clientData, apikey:skywayApiKey });
+  const credentialInfo = makeCredentialInfo(`sample_user${req_count}`);
+  const clientData = {
+    username: `sample_user${req_count}`,
+    credential: credentialInfo.credential,
+    peerId: credentialInfo.peerId
+  };
+  res.render("./authenticated_client.ejs", { clientdata: clientData, apikey:skywayApiKey });
+  req_count++;
 });
 
 app.set('port', (process.env.PORT || 5000));
