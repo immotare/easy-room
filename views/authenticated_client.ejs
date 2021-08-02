@@ -7,54 +7,110 @@
     <script src="https://cdn.webrtc.ecl.ntt.com/skyway-4.4.1.js"></script>
   </head>
   <body>
-    <img src=<%- clientData.userimgurl %>>
-    <p id="username"><%= clientData.username %></p>
+    <p id="username"><%= clientdata.username %></p>
     <input type="text" id="roomname">
-    <button id="connectbtn" onclick="connectRoom()">切断</button>
-    <button id="disconnectbtn" onclick="disconnectRoom()">接続</button>
+    <button id="makepeerbtn" onclick="makePeer()">Peer作成</button>
+    <button id="disconnectbtn" onclick="disconnectRoom()">切断</button>
+    <button id="connectbtn" onclick="connectRoom()">接続</button>
   </body>
-  <li>
-  </li>
-  <script type="application/json" id="credential">
-    <%= clientData.credential%>
-  </script>
+  <ul id="room-members">
+    ユーザ一覧
+  </ul>
   <script type="text/javascript">
+    const clientData = <%- JSON.stringify(clientdata) %>;
+    const selfPeerId = clientData.peerId;
+    const selfUserName = clientData.username;
+    const credential = clientData.credential;
+    const debugItems = {clientdata: JSON.stringify(clientData), selfpeerid: selfPeerId, selfusername: selfUserName, credential: JSON.stringify(credential)};
+    itemLogger(debugItems);
+    const roomMembersList = document.getElementById("room-members");
     let peer = null;
     let joinedSfuRoom = null;
     let localStream = null;
-    const credential = JSON.parse(document.getElementById("credential").textContent);
 
-    function connectRoom() {
-      const roomName = document.getElementById("roomname").value;
-      if (!roomName) {
-        alert("ルーム名を入力してください");
+    async function makePeer() {
+      return new Promise((resolve, reject) => {
+        if (!peer) {
+            peer = new Peer(selfPeerId, {
+                key: "<%= apikey %>",
+                credential: credential
+            });
+            peer.on("open", (id) => {
+              console.log(`successfully connected: id=${id}`);
+              resolve();
+            });
+            peer.on("error", (error) => {
+              // throw creation time error
+              reject(error);
+            });
+        }
+        else {
+          resolve();
+        }
+      })
+    }
+
+    async function connectRoom () {
+      try {
+        await makePeer();
+				if (!localStream) {
+					localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+				}
+        peer.on("error", (error) => {
+          // detect running time error
+          console.error(`Connection Error.\n${error.type}: ${error.message}`);
+        });
+
+				const roomName = document.getElementById("roomname").value;
+				if (!roomName) {
+					alert("ルーム名を入力してください");
+					return;
+				}
+
+				joinedSfuRoom = peer.joinRoom(roomName, {
+					mode: "sfu",
+					stream: localStream
+				});
+
+				joinedSfuRoom.on("open", () => {
+					alert("opened the room.");
+				});
+
+				joinedSfuRoom.on("peerJoin", (peerId) => {
+					const joinedUserName = peerId.substring(0,peerId.length - 36);
+					if (joinedUserName != selfUserName) {
+						const memberInfo = document.createElement("li");
+						memberInfo.id = peerId;
+						memberInfo.textContent = joinedUserName;
+						roomMembersList.appendchild(memberInfo);
+					}
+					alert(`Joined ${joinedUserName}!`);
+				});
+      }
+      catch (error) {
+        console.error(`${error.type}: ${error.message}`);
         return;
       }
 
-      if (!peer) {
-        peer = new Peer({
-          key: <%= apiKey %>
-          config: credential
-        });
-        peer.on("open", (id) => {
-          console.log(`successfully connected: id=${id}`);
-        });
-        peer.on("error", (error) => {
-          console.log(`${error.type}: ${error.message}`);
-        });
-      }
+      
+    }
 
-      joinedSfuRoom = peer.joinRoom(roomName, {
-        mode: "sfu",
-        stream: localStream
-      });
-      joinedSfuRoom.on("open", () => {
-        // TODO:ルーム作成時の処理
-      });
-      joinedSfuRoom.on("peerJoin", (peerId) => {
-        const joinedUserName = peerId.substring(0,peerId.length - 36);
-        alert(`Joined ${joinedUserName}!`);
-      });
+		<!-- function addMemberList (peerId) { -->
+		<!-- } -->
+    
+    function disconnectRoom() {
+      if (peer && joinedSfuRoom) {
+        joinedSfuRoom.close();
+        joinedSfuRoom = null;
+      }
+    }
+    
+    function itemLogger (itemDict) {
+      console.log('--- Logging Items ---');
+      for (const key in itemDict) {
+        console.log(`${key}:${itemDict[key]}`);
+      }
+      console.log('---------------------');
     }
   </script>
 </html>

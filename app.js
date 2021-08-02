@@ -63,20 +63,21 @@ app.get('/auth', async function(req, res) {
     );
 
     // get userid and avator image url
-    const getUserProfileRes = await axios.post('https://slack.com/api/users.profile.get',getUserProfileParams);
+    const getUserProfileRes = await axios.post('https://slack.com/api/users.profile.get', getUserProfileParams);
     const userProfileData = getUserProfileRes.data;
     console.log(userProfileData);
     let userName = userProfileData.profile.display_name;
     if (!userName) {
       userName = userProfileData.profile.real_name;
     }
-    const userImgUrl = userProfileData.profile.image_48;
+    // const userImgUrl = userProfileData.profile.image_48;
 
     // make credential info from secret key
+    // only use userName
     const credentialInfo = makeCredentialInfo(userName);
     const clientData = { 
       username: userName, 
-      userimgurl: userImgUrl, 
+      // userimgurl: userImgUrl, 
       credential: credentialInfo.credential,
       peerId: credentialInfo.peerId
     };
@@ -87,6 +88,16 @@ app.get('/auth', async function(req, res) {
   }
 })
 
+app.get('/testclient', function (req, res) {
+    const credentialInfo = makeCredentialInfo('sample_user');
+    const clientData = {
+      username: 'sample_user',
+      credential: credentialInfo.credential,
+      peerId: credentialInfo.peerId
+    };
+    res.render("./authenticated_client.ejs", { clientdata: clientData, apikey:skywayApiKey });
+});
+
 app.set('port', (process.env.PORT || 5000));
 
 app.listen(app.get('port'), function() {
@@ -96,12 +107,13 @@ app.listen(app.get('port'), function() {
 
 function makeCredentialInfo(userName) {
   const unixTimeStamp = Math.floor(Date.now() / 1000);
-  const peerId = userName + uuidv4();
+  const peerId = userName + uuidv4(); // uuidv4  => ex:'9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d'
   const hash = CryptoJS.HmacSHA256(`${unixTimeStamp}:${credentialTTL}:${peerId}`, skywaySecretKey);
   const hashBase64 = CryptoJS.enc.Base64.stringify(hash);
   const credentialInfo = {
     peerId: peerId,
     credential: {
+      peerId: peerId,
       timestamp: unixTimeStamp,
       ttl: credentialTTL,
       authToken: hashBase64
