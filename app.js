@@ -1,9 +1,10 @@
 require('dotenv').config();
 const express = require('express');
 const axios = require('axios');
-const CryptoJS = require('crypto-js');
 const app = express();
 const { v4: uuidv4 } = require('uuid');
+const DB = require('./modules/pgs_db');
+const CredentialInfo = require('./modules/credential')
 
 app.use(express.static(__dirname + '/public'));
 app.set("view engine", "ejs");
@@ -12,9 +13,13 @@ app.set("views", "./views");
 let req_count = 0;
 const slackSecretKey = process.env.SLACK_SECRET;
 const slackClientId = process.env.SLACK_CLIENT;
+
 const skywaySecretKey = process.env.SKYWAY_SECRET;
 const skywayApiKey = process.env.SKYWAY_API_KEY;
+
 const credentialTTL = 3600;
+
+const db = new DB(process.env.DATABASE_URL);
 
 function forceHttps(req, res, next){
   if (!process.env.PORT) {
@@ -27,6 +32,9 @@ function forceHttps(req, res, next){
     return next();
   }
 };
+
+function checkSession () {
+}
 
 app.all('*', forceHttps); 
 
@@ -45,16 +53,15 @@ app.get('/auth', async function(req, res) {
       }
     );
 
-    // get userid and accesstoken
     const getUserIdRes = await axios.post('https://slack.com/api/oauth.v2.access', getUserIdParams);
     const userIdData = getUserIdRes.data;
     console.log(userIdData);
     const userId = userIdData.authed_user.id;
     const token = userIdData.access_token;
 
-    // if (!userIdData.ok || !userId || !token) {
-    //   // TODO:Make Error Message
-    // }
+    if (!userIdData.ok || !userId || !token) {
+      throw "Invalid user accessing or format."
+    }
     
     const getUserProfileParams = new URLSearchParams(
       {
@@ -63,7 +70,6 @@ app.get('/auth', async function(req, res) {
       }
     );
 
-    // get userid and avator image url
     const getUserProfileRes = await axios.post('https://slack.com/api/users.profile.get', getUserProfileParams);
     const userProfileData = getUserProfileRes.data;
     console.log(userProfileData);
@@ -71,21 +77,19 @@ app.get('/auth', async function(req, res) {
     if (!userName) {
       userName = userProfileData.profile.real_name;
     }
-    // const userImgUrl = userProfileData.profile.image_48;
 
-    // make credential info from secret key
-    // only use userName
-    const credentialInfo = makeCredentialInfo(userName);
+    const uuid = uuidv4();
+    const credentialInfo = CredentialInfo(userName, uuid, credentialTTL);
     const clientData = { 
       username: userName, 
-      // userimgurl: userImgUrl, 
       credential: credentialInfo.credential,
       peerId: credentialInfo.peerId
     };
     console.log(clientData);
     res.render("./authenticated_client.ejs", { clientData: clientData , apiKey:skywayApiKey });
   }
-  catch {
+  catch (e) {
+    console.error(e)
   }
 })
 
@@ -105,21 +109,3 @@ app.set('port', (process.env.PORT || 5000));
 app.listen(app.get('port'), function() {
   console.log("Node app is running at localhost:" + app.get('port'))
 })
-
-
-function makeCredentialInfo(userName) {
-  const unixTimeStamp = Math.floor(Date.now() / 1000);
-  const peerId = userName + uuidv4(); // uuidv4  => ex:'9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d'
-  const hash = CryptoJS.HmacSHA256(`${unixTimeStamp}:${credentialTTL}:${peerId}`, skywaySecretKey);
-  const hashBase64 = CryptoJS.enc.Base64.stringify(hash);
-  const credentialInfo = {
-    peerId: peerId,
-    credential: {
-      peerId: peerId,
-      timestamp: unixTimeStamp,
-      ttl: credentialTTL,
-      authToken: hashBase64
-    }
-  };
-  return credentialInfo;
-}
