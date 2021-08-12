@@ -1,25 +1,37 @@
 require('dotenv').config();
 const express = require('express');
+
 const axios = require('axios');
 const app = express();
 const { v4: uuidv4 } = require('uuid');
-const DB = require('./modules/pgs_db');
-const CredentialInfo = require('./modules/credential')
+const cookieSession = require('cookie-session');
+const CredentialInfo = require('./modules/credential');
+
+const slackSecretKey = process.env.SLACK_SECRET;
+const slackClientId = process.env.SLACK_CLIENT;
+const slackBotToken = process.env.SLACK_BOT_USER_TOKEN;
+
+const skywaySecretKey = process.env.SKYWAY_SECRET;
+const skywayApiKey = process.env.SKYWAY_API_KEY;
+const credentialTTL = 3600; // s
+
+const cookieMaxAge =  60000; // ms
+const cookieSecret = process.env.COOKIE_SECRET;
 
 app.use(express.static(__dirname + '/public'));
 app.set("view engine", "ejs");
 app.set("views", "./views");
 
+app.set('trust proxy', 1);
+app.use(cookieSession({
+  name: 'session',
+  keys: [cookieSecret],
+  secure: true,
+  httpOnly: true,
+  maxAge: cookieMaxAge
+}));
+
 let req_count = 0;
-const slackSecretKey = process.env.SLACK_SECRET;
-const slackClientId = process.env.SLACK_CLIENT;
-
-const skywaySecretKey = process.env.SKYWAY_SECRET;
-const skywayApiKey = process.env.SKYWAY_API_KEY;
-
-const credentialTTL = 3600;
-
-const db = new DB(process.env.DATABASE_URL);
 
 function forceHttps(req, res, next){
   if (!process.env.PORT) {
@@ -28,19 +40,30 @@ function forceHttps(req, res, next){
 
   if (req.headers['x-forwarded-proto'] && req.headers['x-forwarded-proto'] === "http") {
     res.redirect('https://' + req.headers.host + req.url);
-  }else {
+  } else {
     return next();
   }
 };
 
-function checkSession () {
-}
-
 app.all('*', forceHttps); 
 
 app.get('/', function(req, res) {
-  res.sendFile(__dirname + '/public/index1.html');
+  if (req.session && req.session.userName && req.session.userId) {
+    const uuid = uuidv4();
+    const credentialInfo = CredentialInfo(req.session.userName, uuid, credentialTTL, skywaySecretKey);
+    const clientData = { 
+      username: req.session.userName, 
+      credential: credentialInfo.credential,
+      peerId: credentialInfo.peerId
+    };
+    console.log(clientData);
+    res.render("./authenticated_client.ejs", { clientdata: clientData, apikey: skywayApiKey });
+  }
+  else {
+    res.sendFile(__dirname + '/public/index1.html');
+  }
 });
+
 
 app.get('/auth', async function(req, res) {
   try {
@@ -56,16 +79,22 @@ app.get('/auth', async function(req, res) {
     const getUserIdRes = await axios.post('https://slack.com/api/oauth.v2.access', getUserIdParams);
     const userIdData = getUserIdRes.data;
     console.log(userIdData);
-    const userId = userIdData.authed_user.id;
-    const token = userIdData.access_token;
-
-    if (!userIdData.ok || !userId || !token) {
-      throw "Invalid user accessing or format."
-    }
     
+    if (!userIdData.ok) {
+      res.send("Invalid accessing.");
+      return;
+    }
+
+    if (!userIdData.authed_user.id) {
+      res.send("Format Error.");
+      return;
+    }
+
+    const userId = userIdData.authed_user.id;
+
     const getUserProfileParams = new URLSearchParams(
       {
-        token: token,
+        token: slackBotToken,
         user: userId
       }
     );
@@ -73,25 +102,25 @@ app.get('/auth', async function(req, res) {
     const getUserProfileRes = await axios.post('https://slack.com/api/users.profile.get', getUserProfileParams);
     const userProfileData = getUserProfileRes.data;
     console.log(userProfileData);
-    let userName = userProfileData.profile.display_name;
-    if (!userName) {
-      userName = userProfileData.profile.real_name;
+
+    if (!userProfileData.ok) {
+      res.send("Failed to fetch user data.");
+      return;
     }
 
-    const uuid = uuidv4();
-    const credentialInfo = CredentialInfo(userName, uuid, credentialTTL);
-    const clientData = { 
-      username: userName, 
-      credential: credentialInfo.credential,
-      peerId: credentialInfo.peerId
-    };
-    console.log(clientData);
-    res.render("./authenticated_client.ejs", { clientData: clientData , apiKey:skywayApiKey });
+    const userName = userProfileData.profile.display_name || userProfileData.profile.real_name;
+    
+    req.session.userName = userName;
+    req.session.userId = userId;
+
+    res.redirect('/');
   }
   catch (e) {
+    // 
+    res.send("Some error has occured.")
     console.error(e)
   }
-})
+});
 
 app.get('/testclient', function (req, res) {
   const credentialInfo = makeCredentialInfo(`sample_user${req_count}`);
@@ -104,8 +133,9 @@ app.get('/testclient', function (req, res) {
   req_count++;
 });
 
+
 app.set('port', (process.env.PORT || 5000));
 
 app.listen(app.get('port'), function() {
   console.log("Node app is running at localhost:" + app.get('port'))
-})
+});

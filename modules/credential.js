@@ -1,6 +1,6 @@
 const CryptoJS = require('crypto-js');
 
-module.exports = function (userName, uuid, credentialTTL) {
+module.exports = function (userName, uuid, credentialTTL, skywaySecretKey) {
   const unixTimeStamp = Math.floor(Date.now() / 1000);
   const peerId = userName + uuid;
   const hash = CryptoJS.HmacSHA256(`${unixTimeStamp}:${credentialTTL}:${peerId}`, skywaySecretKey);
