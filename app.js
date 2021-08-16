@@ -5,7 +5,7 @@ const axios = require('axios');
 const app = express();
 const { v4: uuidv4 } = require('uuid');
 const cookieSession = require('cookie-session');
-const CredentialInfo = require('./modules/credential');
+const CryptoJS = require('crypto-js');
 
 const slackSecretKey = process.env.SLACK_SECRET;
 const slackClientId = process.env.SLACK_CLIENT;
@@ -47,25 +47,62 @@ function forceHttps(req, res, next){
 
 app.all('*', forceHttps); 
 
-app.get('/', function(req, res) {
+app.get('/', function (req, res)  {
   if (req.session && req.session.userName && req.session.userId) {
-    const uuid = uuidv4();
-    const credentialInfo = CredentialInfo(req.session.userName, uuid, credentialTTL, skywaySecretKey);
-    const clientData = { 
-      username: req.session.userName, 
-      credential: credentialInfo.credential,
-      peerId: credentialInfo.peerId
-    };
-    console.log(clientData);
-    res.render("./authenticated_client.ejs", { clientdata: clientData, apikey: skywayApiKey });
+      const uuid = uuidv4();
+      const credentialInfo = makeCredentialInfo(req.session.userName, uuid);
+      const clientData = { 
+          username: req.session.userName, 
+          credential: credentialInfo.credential,
+          peerId: credentialInfo.peerId
+      };
+      console.log(clientData);
+      res.render("./authenticated_client.ejs", { clientdata: clientData, apikey: skywayApiKey });
   }
   else {
-    res.sendFile(__dirname + '/public/index1.html');
+      res.sendFile(__dirname + '/public/index1.html');
   }
 });
 
+// fetch userdata from SlackApi and set to client.
+app.get('/auth', setUserDatatoCookie);
 
-app.get('/auth', async function(req, res) {
+app.get('/testclient', function (req, res) {
+  const credentialInfo = makeCredentialInfo(`sample_user${req_count}`);
+  const clientData = {
+    username: `sample_user${req_count}`,
+    credential: credentialInfo.credential,
+    peerId: credentialInfo.peerId
+  };
+  res.render("./authenticated_client.ejs", { clientdata: clientData, apikey:skywayApiKey });
+  req_count++;
+});
+
+
+app.set('port', (process.env.PORT || 5000));
+
+app.listen(app.get('port'), function() {
+  console.log("Node app is running at localhost:" + app.get('port'))
+});
+
+function makeCredentialInfo (userName, uuid) {
+  const unixTimeStamp = Math.floor(Date.now() / 1000);
+  const peerId = userName + uuid;
+  const hash = CryptoJS.HmacSHA256(`${unixTimeStamp}:${credentialTTL}:${peerId}`, skywaySecretKey);
+  const hashBase64 = CryptoJS.enc.Base64.stringify(hash);
+  const credentialInfo = {
+    peerId: peerId,
+    credential: {
+      peerId: peerId,
+      timestamp: unixTimeStamp,
+      ttl: credentialTTL,
+      authToken: hashBase64
+    }
+  };
+  return credentialInfo;
+}
+
+async function setUserDatatoCookie () {
   try {
     const slackCode = req.query.code;
     const getUserIdParams = new URLSearchParams(
@@ -120,22 +157,4 @@ app.get('/auth', async function(req, res) {
     res.send("Some error has occured.")
     console.error(e)
   }
-});
-
-app.get('/testclient', function (req, res) {
-  const credentialInfo = makeCredentialInfo(`sample_user${req_count}`);
-  const clientData = {
-    username: `sample_user${req_count}`,
-    credential: credentialInfo.credential,
-    peerId: credentialInfo.peerId
-  };
-  res.render("./authenticated_client.ejs", { clientdata: clientData, apikey:skywayApiKey });
-  req_count++;
-});
-
-
-app.set('port', (process.env.PORT || 5000));
-
-app.listen(app.get('port'), function() {
-  console.log("Node app is running at localhost:" + app.get('port'))
-});
+}
