@@ -8,7 +8,7 @@
   </head>
   <body>
     <p id="username"><%= clientdata.username %></p>
-    <input type="text" id="roomname">
+    <input type="text" id="room-name">
     <button id="makepeerbtn" onclick="makePeer()">Peer作成</button>
     <button id="disconnectbtn" onclick="disconnectRoom()">切断</button>
     <button id="connectbtn" onclick="connectRoom()">接続</button>
@@ -18,6 +18,7 @@
   </ul>
 
   <script type="text/javascript">
+
     const clientData = <%- JSON.stringify(clientdata) %>;
     const selfPeerId = clientData.peerId;
     const selfUserName = clientData.username;
@@ -189,7 +190,7 @@
           }
         }
 
-        const roomName = document.getElementById("roomname").value;
+        const roomName = document.getElementById("room-name").value;
         if (!roomName) {
             alert("ルーム名を入力してください");
             return;
