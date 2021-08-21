@@ -6,6 +6,7 @@ export default class MemberListManager {
     addMembers (peerIds) {
       // peerId := {username}{uuid}
       for (const peerId of peerIds ) {
+        console.log(String(peerId) + " is joined.");
         const userName = peerId.substring(0, peerId.length - 36);
         const memberElment = document.createElement("li");
         memberElment.id = peerId;

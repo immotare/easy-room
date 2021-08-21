@@ -11,8 +11,8 @@ export default class RemoteAudios {
       memberAudioElement.srcObject = stream;
       document.body.appendChild(memberAudioElement);
 
-      const memberSourceNode = this.audioContext.createMediaElementSource(memberAudio);
-      const memberGainNode = this.auidioContext.createGain();
+      const memberSourceNode = this.audioContext.createMediaElementSource(memberAudioElement);
+      const memberGainNode = this.audioContext.createGain();
 
       memberSourceNode.connect(memberGainNode);
       memberGainNode.connect(this.audioContext.destination);
@@ -28,9 +28,9 @@ export default class RemoteAudios {
   removeAudioNodes (peerIds) {
     for (const peerId of peerIds) {
       if (!this.remoteAudioNodes[peerId])continue;
-      const memberAudioElement = document.getElementById(peerId);
+      const memberAudioElement = document.getElementById("audio-" + peerId);
       memberAudioElement.remove();
-      const memberSourceNode = remoteAudioNodes[peerId].sourcenode;
+      const memberSourceNode = this.remoteAudioNodes[peerId].sourcenode;
       const memberGainNode = this.remoteAudioNodes[peerId].gainnode;
 
       memberGainNode.disconnect();

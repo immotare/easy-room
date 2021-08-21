@@ -5,13 +5,14 @@ export default class PeerManager {
     }
 
     async makePeer (peerId, credential, apiKey) {
-      return Promise ((resolve, reject) => {
+      return new Promise ((resolve, reject) => {
         if (!this.peer) {
           this.peer = new Peer(peerId, {
             key: apiKey,
             credential: credential
           });
           this.peer.on("open", (id) => {
+            console.log("peer connection established.");
             resolve();
           });
           this.peer.on("error", (error) => {
@@ -23,7 +24,7 @@ export default class PeerManager {
     }
 
     joinRoom (roomName, eventListeners, localStream) {
-      this.joinedRoom = this.peer.joinRoom (roomName, {
+      this.joinedRoom = this.peer.joinRoom(roomName, {
         mode: "sfu",
         stream: localStream
       });

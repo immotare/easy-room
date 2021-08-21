@@ -19,6 +19,7 @@ const cookieMaxAge =  60000; // ms
 const cookieSecret = process.env.COOKIE_SECRET;
 
 app.use(express.static(__dirname + '/public'));
+app.use(express.static(__dirname + '/dist'));
 app.set("view engine", "ejs");
 app.set("views", "./views");
 
@@ -68,7 +69,8 @@ app.get('/', function (req, res)  {
 app.get('/auth', setUserDatatoCookie);
 
 app.get('/testclient', function (req, res) {
-  const credentialInfo = makeCredentialInfo(`sample_user${req_count}`);
+  const uuid = uuidv4();
+  const credentialInfo = makeCredentialInfo(`sample_user${req_count}`, uuid);
   const clientData = {
     username: `sample_user${req_count}`,
     credential: credentialInfo.credential,

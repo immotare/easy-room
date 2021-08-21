@@ -5,219 +5,23 @@
     <title>easy-room</title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <script src="https://cdn.webrtc.ecl.ntt.com/skyway-4.4.1.js"></script>
+    <script src="main.js"></script>
   </head>
   <body>
     <p id="username"><%= clientdata.username %></p>
     <input type="text" id="room-name">
-    <button id="makepeerbtn" onclick="makePeer()">Peer作成</button>
-    <button id="disconnectbtn" onclick="disconnectRoom()">切断</button>
-    <button id="connectbtn" onclick="connectRoom()">接続</button>
+    <button id="makepeerbtn">Peer作成</button>
+    <button id="disconnectbtn">切断</button>
+    <button id="connectbtn">接続</button>
+    <ul id="room-members">
+      ユーザ一覧
+    </ul>
   </body>
-  <ul id="room-members">
-    ユーザ一覧
-  </ul>
-
+  
   <script type="text/javascript">
-
     const clientData = <%- JSON.stringify(clientdata) %>;
-    const selfPeerId = clientData.peerId;
-    const selfUserName = clientData.username;
-    const credential = clientData.credential;
-    const debugItems = {clientdata: JSON.stringify(clientData), selfpeerid: selfPeerId, selfusername: selfUserName, credential: JSON.stringify(credential)};
-    itemLogger(debugItems);
-    const roomMembersList = document.getElementById("room-members");
-    let peer = null;
-    let joinedSfuRoom = null;
-    let localStream = null;
-    let localStreamFiltered = null;
-    let remoteAudioNodes = {};
-    let localAudioNodes = {};
-    const AudioContext = window.AudioContext || window.webkitAudioContext;
-    let audioContext = null;
-
-    const eventName = typeof document.ontouchend !== "undefined" ? "touchend" : "mouseup";
-    document.addEventListener(eventName, initAudioContext);
-    function initAudioContext () {
-      console.log("called");
-      document.removeEventListener(eventName, initAudioContext);
-      audioContext = new AudioContext();
-    }
-
-    function filteringStream (stream) {
-      const localAudioSource = audioContext.createMediaStreamSource(stream);
-      const localGain = audioContext.createGain();
-      const localFilter = audioContext.createBiquadFilter(); 
-      const localFilteredDest = audioContext.createMediaStreamDestination();
-
-      localAudioSource.connect(localGain);
-      localGain.connect(localFilter);
-      localFilter.connect(localFilteredDest);
-
-      localAudioNodes = {
-        localaudiosource : localAudioSource,
-        localgain : localGain,
-        localfilter : localFilter,
-        localfiltereddest : localFilteredDest
-      };
-
-      return localFilteredDest.stream;
-    }
-
-    function makePeer() {
-      return new Promise((resolve, reject) => {
-        if (!peer) {
-          peer = new Peer(selfPeerId, {
-              key: "<%= apikey %>",
-              credential: credential
-          });
-          peer.on("open", (id) => {
-              console.log(`successfully connected: id=${id}`);
-              resolve();
-          });
-          peer.on("error", (error) => {
-              // throw creation time error
-              reject(error);
-          });
-        }
-        else {
-          resolve();
-        }
-      })
-    }
-
-    function joinRoom(roomName) {
-      if (joinRoom && joinRoom.name === roomName) {
-        return;
-      }
-
-      joinedSfuRoom = peer.joinRoom(roomName, {
-        mode: "sfu",
-        stream: localStreamFiltered || localStream
-      });
-
-      joinedSfuRoom.on("open", () => {
-        peerIds = joinedSfuRoom.members;
-        peerIds.push(selfPeerId);
-        addMemberList(peerIds);
-      });
-
-      joinedSfuRoom.on("peerJoin", (peerId) => {
-        addMemberList([peerId]);
-      });
-
-      joinedSfuRoom.on("peerLeave", (peerId) => {
-        console.log("peer leaved.");
-        removeMemberList([peerId]);
-      });
-
-      joinedSfuRoom.on("close", () => {
-        console.log("close event emitted.");
-        peerIds = joinedSfuRoom.members;
-        console.log(peerIds);
-        removeMemberList(peerIds)
-        removeAudioSources();
-      });
-
-      joinedSfuRoom.on("stream", (stream) => {
-        console.log("detect remote stream");
-        console.log(stream);
-        console.log("stream connected.");
-        // create Audio Nodes
-        if (!remoteAudioNodes[stream.peerId]) {
-          const memberAudio = document.createElement("audio");
-          memberAudio.id = "audio-"+stream.peerId;
-          memberAudio.srcObject = stream;
-          document.body.appendChild(memberAudio);
-
-          const sourceNode = audioContext.createMediaElementSource(memberAudio);
-          const gainNode = audioContext.createGain();
-
-          console.log("node append");
-          remoteAudioNodes[stream.peerId] = { 
-            sourcenode : sourceNode,
-            gainnode : gainNode
-          };
-          sourceNode.connect(gainNode);
-          gainNode.connect(audioContext.destination);
-          memberAudio.play();
-        }
-
-      });
-    }
-
-    function addMemberList (peerIds) {
-      for (const peerId of peerIds) {
-        const memberName = peerId.substring(0,peerId.length - 36);
-        const memberInfo = document.createElement("li");
-        memberInfo.id = peerId;
-        memberInfo.textContent = memberName;
-        roomMembersList.appendChild(memberInfo);
-      }
-    }
-
-    function removeMemberList (peerIds) {
-      for (const peerId of peerIds) {
-        const memberInfo = document.getElementById(peerId);
-        memberInfo.remove();
-      }
-    }
-
-    function removeAudioSources () {
-      if (!remoteAudioNodes.length)return;
-      for (const peerId of remoteAudioNodes) {
-        const audioSource = document.getElementById(peerId);
-        audioSource.remove();
-        remoteAudioNodes[peerId].gainnode.disconnect();
-        delete remoteAudioNodes[peerId];
-      }
-    }
-
-    async function connectRoom () {
-      try {
-        await makePeer();
-        peer.on("error", (error) => {
-          // detect running time error
-          console.error(`${error.type}: ${error.message}`);
-        });
-
-        if (!localStream) {
-          localStream = await navigator.mediaDevices.getUserMedia({ audio: true }).catch((error) => {
-              alert("メディアへのアクセスが許可されていません。");
-          });
-          
-          if (localStream) {
-            localStreamFiltered = filteringStream(localStream);
-          }
-        }
-
-        const roomName = document.getElementById("room-name").value;
-        if (!roomName) {
-            alert("ルーム名を入力してください");
-            return;
-        }
-
-        joinRoom(roomName);
-      }
-      catch (error) {
-        alert("Some errors occured.");
-        console.error(`${error.type}: ${error.message}`);
-      }
-    }
-
-
-    function disconnectRoom() {
-      if (peer && joinedSfuRoom) {
-          joinedSfuRoom.close();
-          joinedSfuRoom = null;
-      }
-    }
-
-    function itemLogger (itemDict) {
-      console.log('--- Logging Items ---');
-      for (const key in itemDict) {
-        console.log(`${key}:${itemDict[key]}`);
-      }
-      console.log('---------------------');
-    }
+    window.selfPeerId = clientData.peerId;
+    window.credential = clientData.credential;
+    window.apiKey = "<%= apikey %>";
   </script>
 </html>
