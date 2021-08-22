@@ -16,8 +16,10 @@
     <ul id="room-members">
       ユーザ一覧
     </ul>
+
+    <canvas id="canvas" width="400" height="300" style="border:solid 1px black; display: none;"></canvas>
   </body>
-  
+
   <script type="text/javascript">
     const clientData = <%- JSON.stringify(clientdata) %>;
     window.selfPeerId = clientData.peerId;

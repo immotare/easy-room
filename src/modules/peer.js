@@ -34,6 +34,11 @@ export default class PeerManager {
       this.joinedRoom.on("peerLeave", eventListeners.peerLeave);
       this.joinedRoom.on("close", eventListeners.close);
       this.joinedRoom.on("stream", eventListeners.stream);
+      this.joinedRoom.on("data", eventListeners.data);
+    }
+
+    sendData (data) {
+      this.joinedRoom.send(data);
     }
 
     leaveRoom () {
