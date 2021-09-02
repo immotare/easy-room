@@ -38,10 +38,10 @@ export default class PeerManager {
     }
 
     sendData (data) {
-      this.joinedRoom.send(data);
+      if(this.joinedRoom)this.joinedRoom.send(data);
     }
 
     leaveRoom () {
-      this.joinedRoom.close();
+      if(this.joinedRoom)this.joinedRoom.close();
     }
 }

@@ -5,6 +5,7 @@
     <title>easy-room</title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <script src="https://cdn.webrtc.ecl.ntt.com/skyway-4.4.1.js"></script>
+    <link rel="stylesheet"ref="style.css">
     <script src="main.js"></script>
   </head>
   <body>
@@ -13,16 +14,18 @@
     <button id="makepeerbtn">Peer作成</button>
     <button id="disconnectbtn">切断</button>
     <button id="connectbtn">接続</button>
+    <button id="drawbtn">描画</button>
     <ul id="room-members">
       ユーザ一覧
     </ul>
 
-    <canvas id="canvas" width="400" height="300" style="border:solid 1px black; display: none;"></canvas>
+    <canvas id="canvas" width="800" height="600" style="border:solid 1px black;"></canvas>
   </body>
 
   <script type="text/javascript">
     const clientData = <%- JSON.stringify(clientdata) %>;
     window.selfPeerId = clientData.peerId;
+    window.selfImage = "<%= userimgurl %>";
     window.credential = clientData.credential;
     window.apiKey = "<%= apikey %>";
   </script>

@@ -2,10 +2,12 @@ export default class RemoteImgDrawManager {
   constructor (targetCanvas) {
     this.targetCanvas = targetCanvas;
     this.targetCtx = targetCanvas.getContext("2d");
-    this.remoteImgCanvas = {};
+    this.remoteImgDict = {};
   }
 
-  addRemoteImgCanvas (targetPeerId, imageUrl, x, y) {
+  addRemoteImg(targetPeerId, imageUrl, x, y) {
+    if (this.remoteImgDict[targetPeerId])return;
+    const self = this;
     const remoteImg = new Image();
     const remoteImgCanvas = document.createElement("canvas");
     const remoteCtx = remoteImgCanvas.getContext("2d");
@@ -16,37 +18,44 @@ export default class RemoteImgDrawManager {
       remoteCtx.arc(50, 50, 50, 0, Math.PI*2);
       remoteCtx.clip();
       remoteCtx.drawImage(remoteImg, 0, 0, 100, 100);
-      targetCtx.drawImage(remoteImgCanvas, x, y, 100, 100);
+      self.targetCtx.drawImage(remoteImgCanvas, x, y, 100, 100);
     }
     remoteImg.src = imageUrl;
-    this.remoteImgCanvas[targetPeerId] = {remoteimgcanvas: remoteImgCanvas, x: x, y: y};
+    this.remoteImgDict[targetPeerId] = {remoteimgcanvas: remoteImgCanvas, x: x, y: y};
   }
 
-  redrawRemoteImgCanvas (targetPeerId, x, y) {
-    if (this.remoteImgCanvas[targetPeerId]) {
-      this.remoteImgCanvas[targetPeerId].x = x;
-      this.remoteImgCanvas[targetPeerId].y = y;
-      for (const peerId in this.remoteImgCanvas) {
-        const {remoteimgcanvas, x, y} = this.remoteImgCanvas[peerId];
+  redrawRemoteImgsAll() {
+    for (const peerId in this.remoteImgDict) {
+      const {remoteimgcanvas, x, y} = this.remoteImgDict[peerId];
+      this.targetCtx.drawImage(remoteimgcanvas, x, y, 100, 100);
+    }
+  }
+
+  redrawRemoteImgSpec (targetPeerId, x, y) {
+    if (this.remoteImgDict[targetPeerId]) {
+      this.remoteImgDict[targetPeerId].x = x;
+      this.remoteImgDict[targetPeerId].y = y;
+      for (const peerId in this.remoteImgDict) {
+        const {remoteimgcanvas, x, y} = this.remoteImgDict[peerId];
         this.targetCtx.drawImage(remoteimgcanvas, x, y, 100, 100);
       }
     }
   }
 
-  removeRemoteImgCanvas (targetPeerId) {
-    this.remoteImgCanvas[targetPeerId].remoteimgcanvas.remove();
-    delete this.remoteImgCanvas[targetPeerId];
-    for (const peerId in this.remoteImgCanvas) {
-      const {remoteimgcanvas, x, y} = this.remoteImgCanvas[peerId];
+  removeRemoteImg(targetPeerId) {
+    this.remoteImgDict[targetPeerId].remoteimgcanvas.remove();
+    delete this.remoteImgDict[targetPeerId];
+    for (const peerId in this.remoteImgDict) {
+      const {remoteimgcanvas, x, y} = this.remoteImgDict[peerId];
       this.targetCtx.drawImage(remoteimgcanvas, x, y, 100, 100);
     }
   }
 
-  removeRemoteImgCanvasAll () {
-    for (const peerId in this.remoteImgCanvas) {
-      const remoteImgCanvas = this.remoteImgCanvas[peerId].remoteimgcanvas;
+  removeRemoteImgAll() {
+    for (const peerId in this.remoteImgDict) {
+      const remoteImgCanvas = this.remoteImgDict[peerId].remoteimgcanvas;
       remoteImgCanvas.remove();
     }
-    this.remoteImgCanvas = {};
+    this.remoteImgDict = {};
   }
 }
