@@ -42,6 +42,9 @@ export default class PeerManager {
     }
 
     leaveRoom () {
-      if(this.joinedRoom)this.joinedRoom.close();
+      if(this.joinedRoom) {
+        this.joinedRoom.close();
+        this.joinedRoom = null;
+      }
     }
 }

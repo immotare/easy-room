@@ -74,9 +74,10 @@ app.get('/testclient', function (req, res) {
   const clientData = {
     username: `sample_user${req_count}`,
     credential: credentialInfo.credential,
-    peerId: credentialInfo.peerId
+    peerId: credentialInfo.peerId,
   };
-  res.render("./authenticated_client.ejs", { clientdata: clientData, apikey:skywayApiKey });
+  const  userImgUrl = `${req_count % 3 + 1}.png`
+  res.render("./authenticated_client.ejs", { clientdata: clientData, apikey:skywayApiKey, userimgurl:  userImgUrl});
   req_count++;
 });
 
@@ -155,7 +156,6 @@ async function setUserDatatoCookie () {
     res.redirect('/');
   }
   catch (e) {
-    // 
     res.send("Some error has occured.")
     console.error(e)
   }

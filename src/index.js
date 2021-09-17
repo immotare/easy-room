@@ -5,47 +5,60 @@ import LocalAudioManager from "./modules/localaudio";
 import DraggableImage from "./modules/image";
 import RemoteImgDrawManager from "./modules/remoteimage";
 
-// variables selfPeerId, selfImage, credential, apiKey are declared in ejs.
+// variables selfPeerId, selfImgUrl, credential, apiKey are declared in ejs.
+const sidebarBeforeEntering = document.getElementById("room-content-before-enter");
+const sidebarAfterEntering = document.getElementById("room-content-after-enter");
+
 const AudioContext = window.AudioContext || window.webkitAudioContext;
 let audioContext = null;
 let remoteAudios = null;
 let localAudio = null;
-let memberListManager = null;
-let canvas = null;
-let ctx = null;
-let remoteImgDrawManager = null;
-let draggableImage = null;
-
 const audioInitEventName = typeof document.ontouchend !== "undefined" ? "touchend" : "mouseup";
 document.addEventListener(audioInitEventName, initAudioContext);
+
 function initAudioContext() {
   document.removeEventListener(audioInitEventName, initAudioContext);
   audioContext = new AudioContext();
   remoteAudios = new RemoteAudiosManager(audioContext);
 };
 
-const memberlistElementId = "room-members";
-const roomNameElementId = "room-name";
+const memberListManager = new MemberListManager(document.getElementById("room-members-container"));
+
+const canvas = document.getElementById("target-canvas");
+const ctx = canvas.getContext("2d");
+const remoteImgDrawManager = new RemoteImgDrawManager(canvas, selfImgUrl);
+const draggableImage = new DraggableImage(canvas, selfImgUrl, 100, 100);
+
+
+const roomNameInput = document.getElementById("room-name-input");
+const roomName = document.getElementById("room-name-guide");
+console.log(roomName);
 const peerManager = new PeerManager();
+
 
 const roomEventListener = {
   open: () => {
     let peerIds = peerManager.joinedRoom.members;
     peerIds.push(selfPeerId);
     memberListManager.addMembers(peerIds);
-    console.log("opened room.");
+    memberListManager.assignImgSrc(selfPeerId, selfImgUrl);
     peerManager.sendData({
       type: "addImage",
-      imageUrl: selfImage,
+      imageUrl: selfImgUrl,
       posX: draggableImage.x,
       posY: draggableImage.y
     });
+
+    roomName.innerText = roomNameInput.value;
+    roomNameInput.value = "";
+    sidebarBeforeEntering.style.display = "none";
+    sidebarAfterEntering.style.display = "block";
   },
   peerJoin: (peerId) => {
     memberListManager.addMembers([peerId]);
     peerManager.sendData({
       type: "addImage",
-      imageUrl: selfImage,
+      imageUrl: selfImgUrl,
       posX: draggableImage.x,
       posY: draggableImage.y
     });
@@ -53,15 +66,18 @@ const roomEventListener = {
   peerLeave: (peerId) => {
     memberListManager.removeMembers([peerId]);
     remoteAudios.removeAudioNodes([peerId]);
-    ctx.clearRect(0, 0, 800, 600);
+    ctx.clearRect(0, 0, 1100, 720);
     draggableImage.render(draggableImage.x, draggableImage.y);
     remoteImgDrawManager.removeRemoteImg(peerId);
   },
   close: () => {
+    sidebarAfterEntering.style.display = "none";
+    sidebarBeforeEntering.style.display = "block";
+    roomName.innerText = "";
     const peerIds = peerManager.joinedRoom.members;
     memberListManager.removeMembers(peerIds);
     remoteAudios.removeAudioNodes(peerIds);
-    ctx.clearRect(0, 0, 800, 600);
+    ctx.clearRect(0, 0, 1100, 720);
     draggableImage.render(draggableImage.x, draggableImage.y);
     remoteImgDrawManager.removeRemoteImgAll();
   },
@@ -72,10 +88,12 @@ const roomEventListener = {
     if (data.type == "addImage") {
       // add image
       remoteImgDrawManager.addRemoteImg(src, data.imageUrl, data.posX, data.posY);
+      // assign img url
+      memberListManager.assignImgSrc(src, data.imageUrl);
     }
     if (data.type == "drawEvent") {
       // redraw image
-      ctx.clearRect(0, 0, 800, 600);
+      ctx.clearRect(0, 0, 1100, 720);
       remoteImgDrawManager.redrawRemoteImgSpec(src, data.posX, data.posY);
       draggableImage.render(draggableImage.x, draggableImage.y);
     }
@@ -89,7 +107,7 @@ async function connect() {
     localAudio = new LocalAudioManager(localStream, audioContext);
   }
   await peerManager.makePeer(selfPeerId, credential, apiKey);
-  const roomName = document.getElementById(roomNameElementId).value;
+  const roomName = roomNameInput.value;
   peerManager.joinRoom(roomName, roomEventListener, localAudio.getFilteredStream());
 }
 
@@ -119,9 +137,13 @@ function canvasOnMouseMove(e) {
   const canvasY = e.clientY - offsetY;
 
   if (draggableImage.dragging) {
-    ctx.clearRect(0, 0, 800, 600);
-    const nX = draggableImage.relX + canvasX;
-    const nY = draggableImage.relY + canvasY;
+    ctx.clearRect(0, 0, 1100, 720);
+    let nX = draggableImage.relX + canvasX;
+    let nY = draggableImage.relY + canvasY;
+    nX = Math.min(Math.max(nX, 0), 1000);
+    nY = Math.min(Math.max(nY, 0), 620);
+    console.log("X:", nX);
+    console.log("Y:", nY);
     draggableImage.render(nX, nY);
     if (remoteImgDrawManager) {
       remoteImgDrawManager.redrawRemoteImgsAll();
@@ -134,7 +156,7 @@ function canvasOnMouseUp(e) {
 }
 
 function imgPosNotify() {
-  if (peerManager && draggableImage) {
+  if (peerManager.joinedRoom && draggableImage) {
     peerManager.sendData({
       type: "drawEvent",
       posX: draggableImage.x,
@@ -144,21 +166,10 @@ function imgPosNotify() {
 }
 
 
+document.getElementById("connect-btn").addEventListener("click", connect);
+document.getElementById("disconnect-btn").addEventListener("click", disconnect);
+canvas.addEventListener("mousemove", canvasOnMouseMove);
+canvas.addEventListener("mousedown", canvasOnMouseDown);
+canvas.addEventListener("mouseup", canvasOnMouseUp);
 
-window.onload = (event) => {
-  document.getElementById("connectbtn").addEventListener("click", connect);
-  document.getElementById("disconnectbtn").addEventListener("click", disconnect);
-  document.getElementById("drawbtn").addEventListener("click", draw);
-  memberListManager = new MemberListManager(memberlistElementId);
-
-  canvas = document.getElementById("canvas");
-  ctx = canvas.getContext("2d");
-  remoteImgDrawManager = new RemoteImgDrawManager(canvas);
-  draggableImage = new DraggableImage(canvas, selfImage);
-
-  canvas.addEventListener("mousemove", canvasOnMouseMove);
-  canvas.addEventListener("mousedown", canvasOnMouseDown);
-  canvas.addEventListener("mouseup", canvasOnMouseUp);
-
-  let intervalId = setInterval(imgPosNotify, 300);
-};
+let intervalId = setInterval(imgPosNotify, 300);
