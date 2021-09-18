@@ -1,14 +1,8 @@
-// $font-family: sans-serif;
 $font-family: 'Noto Sans JP', sans-serif;
 $title-font-size: 30px;
 $content-font-size: 15px;
 $sidebar-max-width: 300px;
 $canvas-max-width: 1800px;
-
-.avator-canvas {
-    width: 100px;
-    height: 100px;
-}
 
 body {
     margin: 0px;
@@ -126,46 +120,62 @@ main {
                     width: 100%;
                     overflow-y: scroll;
                     border-bottom: solid 0.5px gainsboro;
-    
+                    padding: 0px;
+
                     .room-member-content {
                         width: 100%;
-                        height: 40px;
-                        position: relative;
-                        gap: 15px;
-                        display: flex;
-                        img {
-                            display: block;
-                            width: 30px;
-                            height: 30px;
-                            margin: {
-                                left: 5px;
-                                top: 5px;
-                                bottom: 5px;
-                            }
-                            border-radius: 50%;
-                        }
-                        p {
-                            display: block;
-                            margin: {
-                                top: 7px;
-                                bottom: 3px;
-                            }
-                            font-size: $content-font-size;
-                            overflow: hidden;
-                            text-overflow: ellipsis;
-                        }
-                        .room-member-content-cover {
-                            position: absolute;
-                            z-index: 1;
-                            opacity: 0;
-                            background-color: black;
+                        display: inline-block;
+                        .room-member-user-info {
                             width: 100%;
-                            height: 100%;
-                            top: 0px;
-                            left: 0px;
+                            height: 40px;
+                            gap: 15px;
+                            display: flex;
+                            img {
+                                display: block;
+                                width: 30px;
+                                height: 30px;
+                                margin: {
+                                    left: 5px;
+                                    top: 5px;
+                                    bottom: 5px;
+                                }
+                                border-radius: 50%;
+                            }
+                            p {
+                                display: block;
+                                margin: {
+                                    top: 7px;
+                                    bottom: 3px;
+                                }
+                                font-size: $content-font-size;
+                                overflow: hidden;
+                                text-overflow: ellipsis;
+                            }
+
                         }
-                        .room-member-content-cover:hover {
-                            opacity: 0.1;
+
+                        .room-member-user-info:hover {
+                            background-color: rgba(0, 0, 0, 0.1);
+                        }
+                        
+                        .room-member-volume-container {
+                            border-top: thick double gainsboro;
+                            border-bottom: solid 0.5px gainsboro;
+                            height: 40px;
+                            gap: 10px;
+                            img {
+                                display: block;
+                                width: 25px;
+                                height: 25px;
+                                margin: {
+                                    top: 6px;
+                                    left: 10px;
+                                }
+                            }
+                            input {
+                                width: 150px;
+                                display: block;
+                            }
                         }
                     }
                 }
@@ -174,6 +184,7 @@ main {
                     display: block;
                     background-color: white;
                     border: none;
+                    border-bottom:solid 0.5px gainsboro;
                     height: 37px;
                     width: 100%;
                     margin: 0px auto;
@@ -209,15 +220,6 @@ main {
         }
     }
 
-    // .content-cover {
-    //     width: 100%;
-    //     height: 100%;
-    //     position: absolute;
-    //     top: 0px;
-    //     left: 0px;
-    //     background-color: rgba(0, 0, 0, 0.1);
-    //     display: none;
-    // }
 }
 
 footer {

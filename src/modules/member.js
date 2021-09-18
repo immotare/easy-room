@@ -7,18 +7,34 @@ export default class MemberListManager {
   createUserContent (userNameString, peerId) {
     const contentWrapper = document.createElement("div");
     contentWrapper.id = peerId + "-user-content";
+    contentWrapper.classList.add("room-member-content");
+
+    const memberInfos = document.createElement("div");
     const userImg = document.createElement("img");
     const userName = document.createElement("p");
-    const contentCover = document.createElement("div");
-
-    contentWrapper.classList.add("room-member-content");
-    contentCover.classList.add("room-member-content-cover");
-    userImg.id = peerId + "-img";
-
-    contentWrapper.appendChild(userImg);
-    contentWrapper.appendChild(userName);
-    contentWrapper.appendChild(contentCover);
     userName.textContent = userNameString;
+    memberInfos.classList.add("room-member-user-info");
+    userImg.id = peerId + "-img";
+    memberInfos.appendChild(userImg);
+    memberInfos.appendChild(userName);
+
+    const memberVolume = document.createElement("div");
+    memberVolume.style.display = "none";
+    const volumeImg = document.createElement("img");
+    volumeImg.src = "volume.png";
+    const volumeSlider = document.createElement("input");
+    volumeSlider.type = "range";
+    memberVolume.classList.add("room-member-volume-container");
+    memberVolume.appendChild(volumeImg);
+    memberVolume.appendChild(volumeSlider);
+
+    memberInfos.onclick = () => {
+      if(memberVolume.style.display === "none")memberVolume.style.display = "flex";
+      else memberVolume.style.display = "none";
+    };
+
+    contentWrapper.appendChild(memberInfos);
+    contentWrapper.appendChild(memberVolume);
     return contentWrapper;
   }
 

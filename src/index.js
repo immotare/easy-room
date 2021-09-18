@@ -32,11 +32,10 @@ const draggableImage = new DraggableImage(canvas, selfImgUrl, 100, 100);
 
 const roomNameInput = document.getElementById("room-name-input");
 const roomName = document.getElementById("room-name-guide");
-console.log(roomName);
 const peerManager = new PeerManager();
 
 
-const roomEventListener = {
+const sfuRoomEventListener = {
   open: () => {
     let peerIds = peerManager.joinedRoom.members;
     peerIds.push(selfPeerId);
@@ -108,7 +107,7 @@ async function connect() {
   }
   await peerManager.makePeer(selfPeerId, credential, apiKey);
   const roomName = roomNameInput.value;
-  peerManager.joinRoom(roomName, roomEventListener, localAudio.getFilteredStream());
+  peerManager.joinRoom(roomName, sfuRoomEventListener, localAudio.getFilteredStream());
 }
 
 function disconnect() {
@@ -142,8 +141,6 @@ function canvasOnMouseMove(e) {
     let nY = draggableImage.relY + canvasY;
     nX = Math.min(Math.max(nX, 0), 1000);
     nY = Math.min(Math.max(nY, 0), 620);
-    console.log("X:", nX);
-    console.log("Y:", nY);
     draggableImage.render(nX, nY);
     if (remoteImgDrawManager) {
       remoteImgDrawManager.redrawRemoteImgsAll();

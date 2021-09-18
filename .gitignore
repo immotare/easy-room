@@ -3,4 +3,6 @@ node_modules/
 dist/
 public/*.png
 public/*.jpg
+public/*.css
+public/*.css.map
 css/
