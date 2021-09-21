@@ -1,8 +1,0 @@
-node_modules/
-.env
-dist/
-public/*.png
-public/*.jpg
-public/*.css
-public/*.css.map
-css/
