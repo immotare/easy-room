@@ -1,0 +1,51 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>easy-room</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <script src="https://cdn.webrtc.ecl.ntt.com/skyway-4.4.1.js"></script>
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <header>
+      <div class="header-title">easy-room</div>
+      <div id="user-name" class="user-name">sample_user</div>
+    </header>
+    <main>
+      <div class="content-container">
+        <div class="side-bar">
+          <div id="room-content-before-enter">
+            <div class="room-enter-guide">ルームへ入室</div>
+            <div class="room-enter-form">
+              <input type="text" id="room-name-input" placeholder="ルーム名を入力"> 
+              <button id="connect-btn">接続</button>
+            </div>
+          </div>
+          <div id="room-content-after-enter">
+            <div id="room-name-guide">ルーム名</div>
+            <div class="room-member-guide">ユーザ一覧</div>
+            <div id="room-members-container">
+            </div>
+            <button id="disconnect-btn">退出する</button>
+          </div>
+        </div>
+        <div class="room-canvas">
+          <canvas id="target-canvas" width="1100" height="720"></canvas>
+        </div>
+      </div>
+      <div class="content-cover"></div>
+    </main>
+    <footer>
+      <p>&copy - immotare</p>
+    </footer>
+  </body>
+  <script type="text/javascript">
+    const clientData = <%- JSON.stringify(clientdata) %>;
+    window.selfPeerId = clientData.peerId;
+    window.selfImgUrl = "<%= userimgurl %>";
+    window.credential = clientData.credential;
+    window.apiKey = "<%= apikey %>";
+  </script>
+  <script src="main.js"></script> 
+</html>
