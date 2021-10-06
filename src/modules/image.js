@@ -8,8 +8,8 @@ export default class DraggableImage {
     this.imgSrcCanvas = document.createElement("canvas");
     this.imgSrcCanvas.width = avatorWidth;
     this.imgSrcCanvas.height = avatorHeight;
-    this.x = null;
-    this.y = null;
+    this.x = 0;
+    this.y = 0;
     this.relX = null;
     this.relY = null;
     this.dragging = false;

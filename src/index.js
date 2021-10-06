@@ -11,7 +11,7 @@ const sidebarAfterEntering = document.getElementById("room-content-after-enter")
 
 const AudioContext = window.AudioContext || window.webkitAudioContext;
 let audioContext = null;
-let remoteAudios = null;
+let remoteAudio = null;
 let localAudio = null;
 const audioInitEventName = typeof document.ontouchend !== "undefined" ? "touchend" : "mouseup";
 document.addEventListener(audioInitEventName, initAudioContext);
@@ -19,7 +19,7 @@ document.addEventListener(audioInitEventName, initAudioContext);
 function initAudioContext() {
   document.removeEventListener(audioInitEventName, initAudioContext);
   audioContext = new AudioContext();
-  remoteAudios = new RemoteAudiosManager(audioContext);
+  remoteAudio = new RemoteAudiosManager(audioContext, 0.0001, 0.001);
 };
 
 const volumeSliderChangeListener = (event) => {
@@ -29,9 +29,13 @@ const volumeSliderChangeListener = (event) => {
     localAudio.adjustGain(volumeSlider.value);
   }
   else {
-    remoteAudios.adjustGain(volumeSlider.value, targetPeerId);
+    remoteAudio.adjustGain(volumeSlider.value, targetPeerId);
   }
 };
+
+// waiting pair of event emission (addImage, stream)
+// (key, value) := (peerId, {observed: bool, stream: stream, imageurl: imageUrl, x: x, y: y})
+let streamAvatorPairObserver = {}
 
 const memberListManager = new MemberListManager(document.getElementById("room-members-container"), volumeSliderChangeListener);
 
@@ -75,7 +79,7 @@ const sfuRoomEventListeners = {
   },
   peerLeave: (peerId) => {
     memberListManager.removeMembers([peerId]);
-    remoteAudios.removeAudioNodes([peerId]);
+    remoteAudio.removeAudioNodes([peerId]);
     ctx.clearRect(0, 0, 1100, 720);
     draggableImage.render(draggableImage.x, draggableImage.y);
     remoteImgDrawManager.removeRemoteImg(peerId);
@@ -86,26 +90,67 @@ const sfuRoomEventListeners = {
     roomName.textContent = "";
     const peerIds = peerManager.joinedRoom.members;
     memberListManager.removeMembers(peerIds);
-    remoteAudios.removeAudioNodes(peerIds);
+    remoteAudio.removeAudioNodes(peerIds);
     ctx.clearRect(0, 0, 1100, 720);
     draggableImage.render(draggableImage.x, draggableImage.y);
     remoteImgDrawManager.removeRemoteImgAll();
+    streamAvatorPairObserver = {};
   },
   stream: (stream) => {
-    remoteAudios.addAudioNode(stream, stream.peerId);
+    if (streamAvatorPairObserver[stream.peerId] && streamAvatorPairObserver[stream.peerId].imageurl) {
+      const posX = streamAvatorPairObserver[stream.peerId].x ?? 0;
+      const posY = streamAvatorPairObserver[stream.peerId].y ?? 0;
+      const imageUrl = streamAvatorPairObserver[stream.peerId].imageurl;
+      console.log(`image url:${imageUrl}\nposX:${posX}\nposY:${posY}`);
+      remoteImgDrawManager.addRemoteImg(stream.peerId, imageUrl, posX, posY);
+      remoteAudio.addAudioNode(stream, stream.peerId);
+      remoteAudio.adjustPanning(draggableImage.x, draggableImage.y, posX, posY, stream.peerId);
+      delete streamAvatorPairObserver[stream.peerId].x;
+      delete streamAvatorPairObserver[stream.peerId].y;
+      delete streamAvatorPairObserver[stream.peerId].imageUrl;
+      streamAvatorPairObserver[stream.peerId].observed = true;
+    }
+    else {
+      streamAvatorPairObserver[stream.peerId] = {};
+      streamAvatorPairObserver[stream.peerId].stream = stream;
+    }
   },
   data: ({ src, data }) => {
     if (data.type == "addImage") {
-      // add image
-      remoteImgDrawManager.addRemoteImg(src, data.imageUrl, data.posX, data.posY);
-      // assign img url
+      // add to memberlist
       memberListManager.assignImgSrc(src, data.imageUrl);
+      // adjust Panning
+      if (streamAvatorPairObserver[src] && streamAvatorPairObserver[src].stream) {
+        const stream = streamAvatorPairObserver[src].stream;
+        console.log(`stream:${stream}`);
+        remoteImgDrawManager.addRemoteImg(src, data.imageUrl, data.posX, data.posY);
+        remoteAudio.addAudioNode(stream, src);
+        remoteAudio.adjustPanning(draggableImage.x, draggableImage.y, data.posX, data.posY, src);
+        delete streamAvatorPairObserver[src].stream;
+        delete streamAvatorPairObserver[src].x;
+        delete streamAvatorPairObserver[src].y;
+        streamAvatorPairObserver[src].observed = true;
+      }
+      else {
+        // add imgInfo to (stream, imageurl) observer
+        streamAvatorPairObserver[src] = {};
+        streamAvatorPairObserver[src].x = data.posX;
+        streamAvatorPairObserver[src].y = data.posY;
+        streamAvatorPairObserver[src].imageurl = data.imageUrl;
+      }
     }
     if (data.type == "drawEvent") {
       // redraw image
-      ctx.clearRect(0, 0, 1100, 720);
-      remoteImgDrawManager.redrawRemoteImgSpec(src, data.posX, data.posY);
-      draggableImage.render(draggableImage.x, draggableImage.y);
+      if (streamAvatorPairObserver[src] && streamAvatorPairObserver[src].observed) {
+        ctx.clearRect(0, 0, 1100, 720);
+        remoteImgDrawManager.redrawRemoteImg(src, data.posX, data.posY);
+        draggableImage.render(draggableImage.x, draggableImage.y);
+        remoteAudio.adjustPanning(draggableImage.x, draggableImage.y, data.posX, data.posY, src);
+      }
+      else if (streamAvatorPairObserver[src]) {
+        streamAvatorPairObserver[src].x = data.posX;
+        streamAvatorPairObserver[src].y = data.posY;
+      }
     }
   }
 };

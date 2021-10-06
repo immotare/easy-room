@@ -31,7 +31,7 @@ export default class RemoteImgDrawManager {
     }
   }
 
-  redrawRemoteImgSpec (targetPeerId, x, y) {
+  redrawRemoteImg(targetPeerId, x, y) {
     if (this.remoteImgDict[targetPeerId]) {
       this.remoteImgDict[targetPeerId].x = x;
       this.remoteImgDict[targetPeerId].y = y;
