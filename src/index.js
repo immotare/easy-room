@@ -83,6 +83,7 @@ const sfuRoomEventListeners = {
     ctx.clearRect(0, 0, 1100, 720);
     draggableImage.render(draggableImage.x, draggableImage.y);
     remoteImgDrawManager.removeRemoteImg(peerId);
+    delete streamAvatorPairObserver[peerId];
   },
   close: () => {
     sidebarAfterEntering.style.display = "none";
