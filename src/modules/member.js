@@ -22,7 +22,7 @@ export default class MemberListManager {
     const memberVolume = document.createElement("div");
     memberVolume.style.display = "none";
     const volumeImg = document.createElement("img");
-    volumeImg.src = "volume.png";
+    volumeImg.src = "assets/volume.png";
     const volumeSlider = document.createElement("input");
     // add member peerId as custom data
     volumeSlider.dataset.peerId = peerId;

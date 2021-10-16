@@ -12,7 +12,6 @@ export default class PeerManager {
             credential: credential
           });
           this.peer.on("open", (id) => {
-            console.log("peer connection established.");
             resolve();
           });
           this.peer.on("error", (error) => {
