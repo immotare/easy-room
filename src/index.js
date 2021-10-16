@@ -19,7 +19,7 @@ document.addEventListener(audioInitEventName, initAudioContext);
 function initAudioContext() {
   document.removeEventListener(audioInitEventName, initAudioContext);
   audioContext = new AudioContext();
-  remoteAudio = new RemoteAudiosManager(audioContext, 0.0001, 0.001);
+  remoteAudio = new RemoteAudiosManager(audioContext, 1, 10);
 };
 
 const volumeSliderChangeListener = (event) => {

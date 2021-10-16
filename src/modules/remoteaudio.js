@@ -58,7 +58,6 @@ export default class RemoteAudio {
     if (!this.remoteAudioNodes[peerId])return;
     const memberGainNode = this.remoteAudioNodes[peerId].gainnode;
     memberGainNode.gain.value = value;
-    console.log(memberGainNode);
   }
 
   adjustPanning(localX, localY, remoteX, remoteY, peerId) {
@@ -67,17 +66,17 @@ export default class RemoteAudio {
     const memberPanner = this.remoteAudioNodes[peerId].pannernode;
 
     const dX = remoteX - localX;
+    const sign = dX > 0 ? 1 : -1;
     const dY = remoteY - localY;
-    const d = Math.sqrt(dX * dX + dY * dY);
-
-    memberPanner.pan.value = this.clampPanValue(this.pannerCoef * dX);
-    const gainValue = Math.max(1 - d * this.panningGainCoef, 0);
+    const d2 = Math.sqrt(dX * dX + dY * dY);
+    memberPanner.pan.value = this.clampPanValue(this.pannerCoef * sign * (dX * dX) / (1100 * 1100));
+    const gainValue = Math.exp(-d2 / 100) * this.panningGainCoef;
     memberPanningGainNode.gain.value = gainValue;
   }
 
   clampPanValue(value) {
-    if (value < -1)return -1;
-    else if(value > 1)return 1;
+    if (value < -0.5)return -0.5;
+    else if(value > 0.5)return 0.5;
     else return value;
   }
 }

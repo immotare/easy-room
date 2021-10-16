@@ -5,12 +5,12 @@
     <title>easy-room</title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <script src="https://cdn.webrtc.ecl.ntt.com/skyway-4.4.1.js"></script>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="assets/style.css">
   </head>
   <body>
     <header>
       <div class="header-title">easy-room</div>
-      <div id="user-name" class="user-name">sample_user</div>
+      <div id="user-name" class="user-name"><%= clientdata.username %></div>
     </header>
     <main>
       <div class="content-container">
@@ -43,9 +43,9 @@
   <script type="text/javascript">
     const clientData = <%- JSON.stringify(clientdata) %>;
     window.selfPeerId = clientData.peerId;
-    window.selfImgUrl = "<%= userimgurl %>";
+    window.selfImgUrl = clientData.userimgurl;
     window.credential = clientData.credential;
     window.apiKey = "<%= apikey %>";
   </script>
-  <script src="main.js"></script> 
+  <script src="assets/main.js"></script> 
 </html>
