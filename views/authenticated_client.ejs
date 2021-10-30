@@ -5,37 +5,46 @@
     <title>easy-room</title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <script src="https://cdn.webrtc.ecl.ntt.com/skyway-4.4.1.js"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link rel="stylesheet" href="assets/style.css">
   </head>
   <body>
     <header>
-      <div class="header-title">easy-room</div>
-      <div id="user-name" class="user-name"><%= clientdata.username %></div>
+      <div id="header-title">easy-room</div>
+      <div id="user-name"><%= clientdata.username %></div>
     </header>
-    <main>
-      <div class="content-container">
-        <div class="side-bar">
-          <div id="room-content-before-enter">
-            <div class="room-enter-guide">ルームへ入室</div>
-            <div class="room-enter-form">
-              <input type="text" id="room-name-input" placeholder="ルーム名を入力"> 
-              <button id="connect-btn">接続</button>
-            </div>
-          </div>
-          <div id="room-content-after-enter">
-            <div id="room-name-guide">ルーム名</div>
-            <div class="room-member-guide">ユーザ一覧</div>
-            <div id="room-members-container">
-            </div>
-            <button id="disconnect-btn">退出する</button>
+    <div id="content-container">
+      <div id="side-bar">
+        <div id="room-content-before-enter">
+          <div id="room-enter-guide">ルームへ入室</div>
+          <div id="room-enter-form">
+            <input type="text" id="room-name-input" placeholder="ルーム名を入力"> 
+            <button id="connect-btn">接続</button>
           </div>
         </div>
-        <div class="room-canvas">
-          <canvas id="target-canvas" width="1100" height="720"></canvas>
+        <div id="room-content-after-enter">
+          <div id="room-name-guide">ルーム名</div>
+          <div id="room-member-guide">ユーザ一覧</div>
+          <div id="room-members-container">
+          </div>
+          <button id="disconnect-btn">退出する</button>
         </div>
       </div>
-      <div class="content-cover"></div>
-    </main>
+      <div id="canvas-container">
+        <canvas id="target-canvas" width="1100" height="750"></canvas>
+        <div id="controller-container">
+          <div id="master-volume-container">
+            <span class="material-icons">volume_up</span>
+            <input id="master-volume" type="range">
+          </div>
+
+          <div id="filter-setting">
+            <span class="material-icons">graphic_eq</span>
+          </div>
+        </div>
+      </div> 
+    </div>
+    <div id="content-cover"></div>
     <footer>
       <p>&copy - immotare</p>
     </footer>

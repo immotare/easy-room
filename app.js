@@ -126,6 +126,7 @@ app.get('/auth', async function (req, res) {
   }
 });
 
+// for testing script on client
 app.get('/testclient', function (req, res) {
   const uuid = uuidv4();
   const credentialInfo = makeCredentialInfo(`sample_user${req_count}`);

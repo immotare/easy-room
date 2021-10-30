@@ -6,6 +6,7 @@ export default class DraggableImage {
     this.targetCanvas = targetCanvas;
     this.targetCtx = targetCanvas.getContext("2d");
     this.imgSrcCanvas = document.createElement("canvas");
+    // document.body.appendChild(this.imgSrcCanvas);
     this.imgSrcCanvas.width = avatorWidth;
     this.imgSrcCanvas.height = avatorHeight;
     this.x = 0;

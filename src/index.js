@@ -9,6 +9,11 @@ import RemoteImgDrawManager from "./modules/remoteimage";
 const sidebarBeforeEntering = document.getElementById("room-content-before-enter");
 const sidebarAfterEntering = document.getElementById("room-content-after-enter");
 
+const canvasWidth = 1100;
+const canvasHeight = 750;
+const avatorWidth = 100;
+const avatorHeight = 100;
+
 const AudioContext = window.AudioContext || window.webkitAudioContext;
 let audioContext = null;
 let remoteAudio = null;
@@ -80,7 +85,7 @@ const sfuRoomEventListeners = {
   peerLeave: (peerId) => {
     memberListManager.removeMembers([peerId]);
     remoteAudio.removeAudioNodes([peerId]);
-    ctx.clearRect(0, 0, 1100, 720);
+    ctx.clearRect(0, 0, canvasWidth, canvasHeight);
     draggableImage.render(draggableImage.x, draggableImage.y);
     remoteImgDrawManager.removeRemoteImg(peerId);
     delete streamAvatorPairObserver[peerId];
@@ -92,7 +97,7 @@ const sfuRoomEventListeners = {
     const peerIds = peerManager.joinedRoom.members;
     memberListManager.removeMembers(peerIds);
     remoteAudio.removeAudioNodes(peerIds);
-    ctx.clearRect(0, 0, 1100, 720);
+    ctx.clearRect(0, 0, canvasWidth, canvasHeight);
     draggableImage.render(draggableImage.x, draggableImage.y);
     remoteImgDrawManager.removeRemoteImgAll();
     streamAvatorPairObserver = {};
@@ -143,7 +148,7 @@ const sfuRoomEventListeners = {
     if (data.type == "drawEvent") {
       // redraw image
       if (streamAvatorPairObserver[src] && streamAvatorPairObserver[src].observed) {
-        ctx.clearRect(0, 0, 1100, 720);
+        ctx.clearRect(0, 0, canvasWidth, canvasHeight);
         remoteImgDrawManager.redrawRemoteImg(src, data.posX, data.posY);
         draggableImage.render(draggableImage.x, draggableImage.y);
         remoteAudio.adjustPanning(draggableImage.x, draggableImage.y, data.posX, data.posY, src);
@@ -193,11 +198,11 @@ function canvasOnMouseMove(e) {
   const canvasY = e.clientY - offsetY;
 
   if (draggableImage.dragging) {
-    ctx.clearRect(0, 0, 1100, 720);
+    ctx.clearRect(0, 0, canvasWidth, canvasHeight);
     let nX = draggableImage.relX + canvasX;
     let nY = draggableImage.relY + canvasY;
-    nX = Math.min(Math.max(nX, 0), 1000);
-    nY = Math.min(Math.max(nY, 0), 620);
+    nX = Math.min(Math.max(nX, 0), canvasWidth - avatorWidth);
+    nY = Math.min(Math.max(nY, 0), canvasHeight - avatorHeight);
     draggableImage.render(nX, nY);
     if (remoteImgDrawManager) {
       remoteImgDrawManager.redrawRemoteImgsAll();
