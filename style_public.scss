@@ -1,65 +1,96 @@
-$font-family: 'Noto Sans JP', sans-serif;
-$title-font-size: 30px;
-$content-font-size: 15px;
-$sidebar-max-width: 300px;
-$canvas-max-width: 1800px;
-
 body {
-    margin: 0px;
-    padding: 0px;
+  margin: 0px;
+  min-height: 100vh;
+  padding: 0px;
+  font-family: "Noto Sans JP", sans-serif;
+  user-select: none;
+  display: flex;
+  flex-flow: column;
+  box-sizing: border-box;
 }
 
 li {
-   list-style-type: none; 
+  list-style-type: none;
 }
-
 
 header {
-    width: 100%;
-    min-width: 1490px;
-    height: 80px;
-    background-color: rgb(76, 130, 231);
-    box-shadow: 0px 0px 2.5px 0px black;
-    .header-title {
-        font-family: $font-family;
-        float: left;
-        font-size: 30px;
-        color: white;
-        margin: 20px;
+  width: 100%;
+  min-width: 1390px;
+  height: 55px;
+  background-color: rgb(76, 130, 231);
+  box-shadow: 0px 0px 2.5px 0px black;
+  overflow: hidden;
+  #header-title {
+    float: left;
+    font-size: 30px;
+    color: white;
+    margin : {
+      top: 5px;
+      left: 20px;
     }
+  }
 
+  #user-name {
+    float: right;
+    font-size: 20px;
+    color: white;
+    margin : {
+      top: 15px;
+      right: 30px;
+    }
+  }
 }
 
-main {
-    width: 100%;
-    height: 700px;
-    margin: auto;
-    .content-container {
-        width: 100%;
-        height: 700px;
-        border-top: 0.5px solid transparent;
-        #login {
-            background-color: rgb(76, 130, 231);;
-            border-radius: 3px; 
-            width: 300px;
-            margin: {
-                top: 300px;
-                left: auto;
-                right: auto;
-            }
-            a {
-                color: white;
-                font-size: 30px;
-                text-align: center;
-                text-decoration: none;
-                display: block;
-                margin: 0px auto;
-            }
-        }
+#content-container {
+  flex: 1;
+  width: 1390px;
+  min-height: 860px;
+  font-size: 15px;
+  box-sizing: border-box;
+  margin: 0px auto;
+  position: relative;
+  #login-btn {
+    border: 0.5px solid black;
+    border-radius: 5px;
+    width: 300px;
+    height: 90px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    a {
+      display: block;
+      text-decoration: none;
+      color: black;
+      position: relative;
+      text-align: center;
+      font-size: 30px;
+      top: 50%;
+      transform: translateY(-50%);
     }
+  }
+
+  #login-btn:hover {
+    background-color: black;
+    a {
+      color: white;
+    }
+  }
 }
 
 footer {
-    width: 100%;
-    border-top: solid 0.5px gainsboro;
+  position: relative;
+  width: 100%;
+  min-width: 1390px;
+  height: 30px;
+  background-color: rgb(50, 50, 50);
+
+  p {
+    margin-left: 5px;
+    display: block;
+    top: 50%;
+    transform: translateY(-50%);
+    color: white;
+    line-height: 1;
+  }
 }
