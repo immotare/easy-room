@@ -11,7 +11,10 @@
   <body>
     <header>
       <div id="header-title">easy-room</div>
-      <div id="user-name"><%= clientdata.username %></div>
+      <div id="user-info-container">
+        <img src="<%- clientdata.userimgurl%>">
+        <div id="user-name"><%= clientdata.username %></div>
+      </div>
     </header>
     <div id="content-container">
       <div id="side-bar">
@@ -26,6 +29,12 @@
           <div id="room-name-guide">ルーム名</div>
           <div id="room-member-guide">ユーザ一覧</div>
           <div id="room-members-container">
+            <div id="self-info" class="room-member-content">
+              <div class="room-member-user-info">
+                <img src=<%- clientdata.userimgurl %>>
+                <p><%= clientdata.username%></p>
+              </div>
+            </div>
           </div>
           <button id="disconnect-btn">退出する</button>
         </div>
@@ -35,9 +44,8 @@
         <div id="controller-container">
           <div id="master-volume-container">
             <span class="material-icons">volume_up</span>
-            <input id="master-volume" type="range">
+            <input id="master-volume" type="range" min="0" max="1.0" value="0.5" step="0.01">
           </div>
-
           <div id="filter-setting">
             <span class="material-icons">graphic_eq</span>
           </div>

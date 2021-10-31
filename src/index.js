@@ -18,36 +18,35 @@ const AudioContext = window.AudioContext || window.webkitAudioContext;
 let audioContext = null;
 let remoteAudio = null;
 let localAudio = null;
+let masterGain = null;
 const audioInitEventName = typeof document.ontouchend !== "undefined" ? "touchend" : "mouseup";
 document.addEventListener(audioInitEventName, initAudioContext);
 
 function initAudioContext() {
   document.removeEventListener(audioInitEventName, initAudioContext);
   audioContext = new AudioContext();
+  masterGain = audioContext.createGain();
+  masterGain.gain.value = 1;
+  masterGain.connect(audioContext.destination)
   remoteAudio = new RemoteAudiosManager(audioContext, 1, 10);
 };
 
-const volumeSliderChangeListener = (event) => {
+const memberVolumeSliderChangeListener = (event) => {
   const volumeSlider = event.target;
   const targetPeerId = volumeSlider.dataset.peerId;
-  if (targetPeerId == selfPeerId) {
-    localAudio.adjustGain(volumeSlider.value);
-  }
-  else {
-    remoteAudio.adjustGain(volumeSlider.value, targetPeerId);
-  }
+  remoteAudio.adjustGain(volumeSlider.value, targetPeerId);
 };
 
 // waiting pair of event emission (addImage, stream)
 // (key, value) := (peerId, {observed: bool, stream: stream, imageurl: imageUrl, x: x, y: y})
 let streamAvatorPairObserver = {}
 
-const memberListManager = new MemberListManager(document.getElementById("room-members-container"), volumeSliderChangeListener);
+const memberListManager = new MemberListManager(document.getElementById("room-members-container"), memberVolumeSliderChangeListener);
 
 const canvas = document.getElementById("target-canvas");
 const ctx = canvas.getContext("2d");
-const remoteImgDrawManager = new RemoteImgDrawManager(canvas, selfImgUrl);
-const draggableImage = new DraggableImage(canvas, selfImgUrl, 100, 100);
+const remoteImgDrawManager = new RemoteImgDrawManager(canvas, avatorWidth, avatorHeight);
+const draggableImage = new DraggableImage(canvas, selfImgUrl, avatorWidth, avatorHeight);
 
 
 const roomNameInput = document.getElementById("room-name-input");
@@ -57,10 +56,8 @@ const peerManager = new PeerManager();
 
 const sfuRoomEventListeners = {
   open: () => {
-    let peerIds = peerManager.joinedRoom.members;
-    peerIds.push(selfPeerId);
-    memberListManager.addMembers(peerIds);
-    memberListManager.assignImgSrc(selfPeerId, selfImgUrl);
+    const roomPeerIds = peerManager.joinedRoom.members;
+    memberListManager.addMembers(roomPeerIds);
     peerManager.sendData({
       type: "addImage",
       imageUrl: selfImgUrl,
@@ -71,7 +68,7 @@ const sfuRoomEventListeners = {
     roomName.textContent = roomNameInput.value;
     roomNameInput.value = "";
     sidebarBeforeEntering.style.display = "none";
-    sidebarAfterEntering.style.display = "block";
+    sidebarAfterEntering.style.display = "flex";
   },
   peerJoin: (peerId) => {
     memberListManager.addMembers([peerId]);
@@ -107,7 +104,6 @@ const sfuRoomEventListeners = {
       const posX = streamAvatorPairObserver[stream.peerId].x ?? 0;
       const posY = streamAvatorPairObserver[stream.peerId].y ?? 0;
       const imageUrl = streamAvatorPairObserver[stream.peerId].imageurl;
-      console.log(`image url:${imageUrl}\nposX:${posX}\nposY:${posY}`);
       remoteImgDrawManager.addRemoteImg(stream.peerId, imageUrl, posX, posY);
       remoteAudio.addAudioNode(stream, stream.peerId);
       remoteAudio.adjustPanning(draggableImage.x, draggableImage.y, posX, posY, stream.peerId);
@@ -124,11 +120,11 @@ const sfuRoomEventListeners = {
   data: ({ src, data }) => {
     if (data.type == "addImage") {
       // add to memberlist
+      console.log(src);
       memberListManager.assignImgSrc(src, data.imageUrl);
       // adjust Panning
       if (streamAvatorPairObserver[src] && streamAvatorPairObserver[src].stream) {
         const stream = streamAvatorPairObserver[src].stream;
-        console.log(`stream:${stream}`);
         remoteImgDrawManager.addRemoteImg(src, data.imageUrl, data.posX, data.posY);
         remoteAudio.addAudioNode(stream, src);
         remoteAudio.adjustPanning(draggableImage.x, draggableImage.y, data.posX, data.posY, src);

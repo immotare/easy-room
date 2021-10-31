@@ -18,6 +18,7 @@ export default class MemberListManager {
     userImg.id = peerId + "-img";
     memberInfo.appendChild(userImg);
     memberInfo.appendChild(userName);
+    contentWrapper.appendChild(memberInfo);
 
     const memberVolume = document.createElement("div");
     memberVolume.style.display = "none";
@@ -42,12 +43,12 @@ export default class MemberListManager {
       else memberVolume.style.display = "none";
     };
 
-    contentWrapper.appendChild(memberInfo);
     contentWrapper.appendChild(memberVolume);
     return contentWrapper;
   }
 
   assignImgSrc (peerId, imgUrl) {
+    console.log(peerId);
     const userImg = document.getElementById(peerId + "-img");
     userImg.src = imgUrl;
   }

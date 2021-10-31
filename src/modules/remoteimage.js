@@ -1,8 +1,10 @@
 export default class RemoteImgDrawManager {
-  constructor (targetCanvas) {
+  constructor (targetCanvas, avatorWidth, avatorHeight) {
     this.targetCanvas = targetCanvas;
     this.targetCtx = targetCanvas.getContext("2d");
     this.remoteImgDict = {};
+    this.avatorWidth = avatorWidth;
+    this.avatorHeight = avatorHeight;
   }
 
   addRemoteImg(targetPeerId, imageUrl, x, y) {
@@ -11,14 +13,21 @@ export default class RemoteImgDrawManager {
     const remoteImg = new Image();
     const remoteImgCanvas = document.createElement("canvas");
     const remoteCtx = remoteImgCanvas.getContext("2d");
-    remoteImgCanvas.width = 100;
-    remoteImgCanvas.height = 100;
+    remoteImgCanvas.width = this.avatorWidth;
+    remoteImgCanvas.height = this.avatorHeight; 
     remoteImg.onload = function () {
+      remoteCtx.fillRect()
+      remoteCtx.lineWidth = 1;
       remoteCtx.beginPath();
-      remoteCtx.arc(50, 50, 50, 0, Math.PI*2);
+      remoteCtx.arc(this.avatorWidth/2, this.avatorHeight/2, this.avatorWidth/2, 0, Math.PI*2);
       remoteCtx.clip();
-      remoteCtx.drawImage(remoteImg, 0, 0, 100, 100);
-      self.targetCtx.drawImage(remoteImgCanvas, x, y, 100, 100);
+      remoteCtx.drawImage(remoteImg, 0, 0, this.avatorWidth, this.avatorHeight);
+      remoteCtx.strokeStyle = "rgb(0, 0, 0)";
+      remoteCtx.lineWidth = 3;
+      remoteCtx.beginPath();
+      remoteCtx.arc(this.avatorWidth/2, this.avatorHeight/2, this.avatorWidth/2, 0, Math.PI*2);
+      remoteCtx.stroke();
+      self.targetCtx.drawImage(remoteImgCanvas, x, y, this.avatorWidth, this.avatorHeight);
     }
     remoteImg.src = imageUrl;
     this.remoteImgDict[targetPeerId] = {remoteimgcanvas: remoteImgCanvas, x: x, y: y};

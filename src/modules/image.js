@@ -19,10 +19,16 @@ export default class DraggableImage {
     const canvasCtx = this.imgSrcCanvas.getContext("2d");
     const sourceImg = new Image();
     sourceImg.onload = function () {
+      canvasCtx.lineWidth = 1;
       canvasCtx.beginPath();
       canvasCtx.arc(avatorWidth/2, avatorHeight/2, avatorWidth/2, 0, Math.PI*2);
       canvasCtx.clip();
       canvasCtx.drawImage(sourceImg, 0, 0, avatorWidth, avatorHeight);
+      canvasCtx.strokeStyle = "rgb(0, 0, 0)";
+      canvasCtx.lineWidth = 3;
+      canvasCtx.beginPath();
+      canvasCtx.arc(avatorWidth/2, avatorHeight/2, avatorWidth/2, 0, Math.PI*2);
+      canvasCtx.stroke();
       self.targetCtx.drawImage(self.imgSrcCanvas, 0, 0, avatorWidth, avatorHeight);
     }
     sourceImg.src = img;
