@@ -1,6 +1,7 @@
 export default class RemoteAudio {
-  constructor (AudioContext, panningGainCoef, pannerCoef) {
-    this.audioContext = AudioContext;
+  constructor (audioContext, masterGain, panningGainCoef, pannerCoef) {
+    this.audioContext = audioContext;
+    this.masterGain = masterGain;
     this.remoteAudioNodes = {};
     this.panningGainCoef = panningGainCoef;
     this.pannerCoef = pannerCoef;
@@ -24,7 +25,8 @@ export default class RemoteAudio {
       memberSourceNode.connect(memberPanningGainNode);
       memberPanningGainNode.connect(memberPannerNode);
       memberPannerNode.connect(memberGainNode);
-      memberGainNode.connect(this.audioContext.destination);
+      memberGainNode.connect(this.masterGain);
+
       this.remoteAudioNodes[peerId] = {
         sourcenode: memberSourceNode,
         panninggainnode: memberPanningGainNode,

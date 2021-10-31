@@ -9,6 +9,7 @@ import RemoteImgDrawManager from "./modules/remoteimage";
 const sidebarBeforeEntering = document.getElementById("room-content-before-enter");
 const sidebarAfterEntering = document.getElementById("room-content-after-enter");
 
+
 const canvasWidth = 1100;
 const canvasHeight = 750;
 const avatorWidth = 100;
@@ -28,14 +29,41 @@ function initAudioContext() {
   masterGain = audioContext.createGain();
   masterGain.gain.value = 1;
   masterGain.connect(audioContext.destination)
-  remoteAudio = new RemoteAudiosManager(audioContext, 1, 10);
+  remoteAudio = new RemoteAudiosManager(audioContext, masterGain, 1, 10);
 };
+
+const masterVolumeSlider = document.getElementById("master-volume");
+
+masterVolumeSlider.oninput = () => {
+  const value = masterVolumeSlider.value;
+  masterGain.gain.value = value;
+}
+
+const audioSettingBtn = document.getElementById("filter-setting");
+const contentCover = document.getElementById("content-cover");
+const audioSettingDialog = document.getElementById("audio-setting-dialog");
+
+console.log(contentCover);
+contentCover.style.display = "none";
+
+audioSettingBtn.onclick = () => {
+  if (contentCover.style.display === "none") {
+    contentCover.style.display = "block";
+  }
+}
+
+contentCover.onclick = () => {
+  if (contentCover.style.display !== "none")contentCover.style.display = "none";
+}
+
+
 
 const memberVolumeSliderChangeListener = (event) => {
   const volumeSlider = event.target;
   const targetPeerId = volumeSlider.dataset.peerId;
   remoteAudio.adjustGain(volumeSlider.value, targetPeerId);
 };
+
 
 // waiting pair of event emission (addImage, stream)
 // (key, value) := (peerId, {observed: bool, stream: stream, imageurl: imageUrl, x: x, y: y})
@@ -195,14 +223,15 @@ function canvasOnMouseMove(e) {
 
   if (draggableImage.dragging) {
     ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+    if (remoteImgDrawManager) {
+      remoteImgDrawManager.redrawRemoteImgsAll();
+    }
     let nX = draggableImage.relX + canvasX;
     let nY = draggableImage.relY + canvasY;
     nX = Math.min(Math.max(nX, 0), canvasWidth - avatorWidth);
     nY = Math.min(Math.max(nY, 0), canvasHeight - avatorHeight);
     draggableImage.render(nX, nY);
-    if (remoteImgDrawManager) {
-      remoteImgDrawManager.redrawRemoteImgsAll();
-    }
   }
 }
 
