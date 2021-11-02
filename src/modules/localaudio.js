@@ -1,7 +1,8 @@
 export default class LocalAudio {
-    constructor (stream, AudioContext) {
+    constructor (stream, audioContext, masterGain) {
         this.stream = stream;
-        this.audioContext = AudioContext;
+        this.audioContext = audioContext;
+        this.masterGain = masterGain;
         this.audioSourceNode = this.audioContext.createMediaStreamSource(stream);
         this.gainNode = this.audioContext.createGain();
         this.audioDest = this.audioContext.createMediaStreamDestination();
@@ -17,5 +18,15 @@ export default class LocalAudio {
 
     adjustGain(value) {
         this.gainNode.gain.value = value;
+    }
+
+    setMictoMasterGain() {
+        this.gainNode.disconnect();
+        this.gainNode.connect(this.masterGain);
+    }
+
+    setMictoStream() {
+        this.gainNode.disconnect();
+        this.gainNode.connect(this.audioDest);
     }
 }

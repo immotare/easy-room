@@ -9,26 +9,23 @@ export default class RemoteImgDrawManager {
 
   addRemoteImg(targetPeerId, imageUrl, x, y) {
     if (this.remoteImgDict[targetPeerId])return;
-    const self = this;
     const remoteImg = new Image();
     const remoteImgCanvas = document.createElement("canvas");
     const remoteCtx = remoteImgCanvas.getContext("2d");
     remoteImgCanvas.width = this.avatorWidth;
     remoteImgCanvas.height = this.avatorHeight; 
-    remoteImg.onload = function () {
+    remoteImg.onload = () => {
       remoteCtx.lineWidth = 1;
       remoteCtx.beginPath();
-      remoteCtx.arc(self.avatorWidth/2, self.avatorHeight/2, self.avatorWidth/2, 0, Math.PI*2);
+      remoteCtx.arc(this.avatorWidth/2, this.avatorHeight/2, this.avatorWidth/2, 0, Math.PI*2);
       remoteCtx.clip();
-      remoteCtx.drawImage(remoteImg, 0, 0, self.avatorWidth, self.avatorHeight);
+      remoteCtx.drawImage(remoteImg, 0, 0, this.avatorWidth, this.avatorHeight);
       remoteCtx.strokeStyle = "rgb(0, 0, 0)";
       remoteCtx.lineWidth = 3;
       remoteCtx.beginPath();
-      remoteCtx.arc(self.avatorWidth/2, self.avatorHeight/2, self.avatorWidth/2, 0, Math.PI*2);
+      remoteCtx.arc(this.avatorWidth/2, this.avatorHeight/2, this.avatorWidth/2, 0, Math.PI*2);
       remoteCtx.stroke();
-      self.targetCtx.drawImage(remoteImgCanvas, x, y, this.avatorWidth, this.avatorHeight);
-      console.log("image url:", imageUrl);
-      console.log("add remote img");
+      this.targetCtx.drawImage(remoteImgCanvas, x, y, this.avatorWidth, this.avatorHeight);
     }
     remoteImg.src = imageUrl;
     this.remoteImgDict[targetPeerId] = {remoteimgcanvas: remoteImgCanvas, x: x, y: y};
@@ -37,7 +34,7 @@ export default class RemoteImgDrawManager {
   redrawRemoteImgsAll() {
     for (const peerId in this.remoteImgDict) {
       const {remoteimgcanvas, x, y} = this.remoteImgDict[peerId];
-      this.targetCtx.drawImage(remoteimgcanvas, x, y, 100, 100);
+      this.targetCtx.drawImage(remoteimgcanvas, x, y, this.avatorWidth, this.avatorHeight);
     }
   }
 
@@ -47,7 +44,7 @@ export default class RemoteImgDrawManager {
       this.remoteImgDict[targetPeerId].y = y;
       for (const peerId in this.remoteImgDict) {
         const {remoteimgcanvas, x, y} = this.remoteImgDict[peerId];
-        this.targetCtx.drawImage(remoteimgcanvas, x, y, 100, 100);
+        this.targetCtx.drawImage(remoteimgcanvas, x, y, this.avatorWidth, this.avatorHeight);
       }
     }
   }
@@ -57,7 +54,7 @@ export default class RemoteImgDrawManager {
     delete this.remoteImgDict[targetPeerId];
     for (const peerId in this.remoteImgDict) {
       const {remoteimgcanvas, x, y} = this.remoteImgDict[peerId];
-      this.targetCtx.drawImage(remoteimgcanvas, x, y, 100, 100);
+      this.targetCtx.drawImage(remoteimgcanvas, x, y, this.avatorWidth, this.avatorHeight);
     }
   }
 

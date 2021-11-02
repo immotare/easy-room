@@ -16,46 +16,63 @@
         <div id="user-name"><%= clientdata.username %></div>
       </div>
     </header>
-    <div id="content-container">
-      <div id="side-bar">
-        <div id="room-content-before-enter">
-          <div id="room-enter-guide">ルームへ入室</div>
-          <div id="room-enter-form">
-            <input type="text" id="room-name-input" placeholder="ルーム名を入力"> 
-            <button id="connect-btn">接続</button>
-          </div>
-        </div>
-        <div id="room-content-after-enter">
-          <div id="room-name-guide">ルーム名</div>
-          <div id="room-member-guide">ユーザ一覧</div>
-          <div id="room-members-container">
-            <div id="self-info" class="room-member-content">
-              <div class="room-member-user-info">
-                <img src=<%- clientdata.userimgurl %>>
-                <p><%= clientdata.username%></p>
-              </div>
+    <main>
+      <div id="content-container">
+        <div id="side-bar">
+          <div id="room-content-before-enter">
+            <div id="room-enter-guide">ルームへ入室</div>
+            <div id="room-enter-form">
+              <input type="text" id="room-name-input" placeholder="ルーム名を入力"> 
+              <button id="connect-btn">接続</button>
             </div>
           </div>
-          <button id="disconnect-btn">退出する</button>
+          <div id="room-content-after-enter">
+            <div id="room-name-guide">ルーム名</div>
+            <div id="room-member-guide">ユーザ一覧</div>
+            <div id="room-members-container">
+              <div id="self-info" class="room-member-content">
+                <div class="room-member-user-info">
+                  <img src=<%- clientdata.userimgurl %>>
+                  <p><%= clientdata.username%></p>
+                </div>
+              </div>
+            </div>
+            <button id="disconnect-btn">退出する</button>
+          </div>
+        </div>
+        <div id="canvas-container">
+          <canvas id="target-canvas" width="1100" height="750"></canvas>
+          <div id="controller-container">
+            <div id="master-volume-container">
+              <span class="material-icons">volume_up</span>
+              <input id="master-volume" type="range" min="0" max="1.0" value="0.5" step="0.01">
+            </div>
+            <div id="filter-setting">
+              <span class="material-icons">graphic_eq</span>
+            </div>
+          </div>
+        </div> 
+      </div>
+      <div id="content-cover">
+        <div id="audio-setting-dialog">
+          <div id="dialog-close-btn">
+            <span class="material-icons">close</span>
+          </div>
+          <div id="audio-setting-content-container">
+            <div id="mic-input-volume-container">
+              <input id="mic-input-volume" type="range" orient="vertical">
+              <span class="material-icons">mic</span>
+              <div id="mic-input-volume-description">マイクの音量</div>
+            </div>
+            <div id="panner-paramslider-container">
+              <canvas id="panner-param-canvas" width="450" height="250"></canvas>
+              <input id="panner-paramslider" type="range" min="0" max="1" value="0.5" step="0.01">
+              <div id="panner-paramslider-description">聞こえる広さ</div>
+            </div>
+          </div>
         </div>
       </div>
-      <div id="canvas-container">
-        <canvas id="target-canvas" width="1100" height="750"></canvas>
-        <div id="controller-container">
-          <div id="master-volume-container">
-            <span class="material-icons">volume_up</span>
-            <input id="master-volume" type="range" min="0" max="1.0" value="0.5" step="0.01">
-          </div>
-          <div id="filter-setting">
-            <span class="material-icons">graphic_eq</span>
-          </div>
-        </div>
-      </div> 
-    </div>
-    <div id="content-cover">
-      <div id="audio-setting-dialog">
-      </div>
-    </div>
+    </main>
     <footer>
       <p>&copy - immotare</p>
     </footer>

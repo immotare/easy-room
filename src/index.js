@@ -10,8 +10,8 @@ const sidebarBeforeEntering = document.getElementById("room-content-before-enter
 const sidebarAfterEntering = document.getElementById("room-content-after-enter");
 
 
-const canvasWidth = 1100;
-const canvasHeight = 750;
+const roomCanvasWidth = 1100;
+const roomCanvasHeight = 750;
 const avatorWidth = 100;
 const avatorHeight = 100;
 
@@ -20,16 +20,56 @@ let audioContext = null;
 let remoteAudio = null;
 let localAudio = null;
 let masterGain = null;
+let masterAnalyser = null;
+let analyserArrayLength = null;
+let analyserArray = null;
+
+const pannerParamCanvas = document.getElementById("panner-param-canvas");
+const pannerParamCanvasCtx = pannerParamCanvas.getContext("2d");
+const pannerParamCanvasWidth = 450;
+const pannerParamCanvasHeight = 250;
 const audioInitEventName = typeof document.ontouchend !== "undefined" ? "touchend" : "mouseup";
 document.addEventListener(audioInitEventName, initAudioContext);
+
+function drawAnalyserCanvas() {
+  requestAnimationFrame(drawAnalyserCanvas);
+  masterAnalyser.getByteTimeDomainData(analyserArray);
+  pannerParamCanvasCtx.clearRect(0, 0, pannerParamCanvasWidth, pannerParamCanvasHeight);
+
+  pannerParamCanvasCtx.lineWidth = 2;
+  pannerParamCanvasCtx.strokeStyle = "rgb(0, 0, 0)";
+  pannerParamCanvasCtx.beginPath();
+
+  const sliceWidth = pannerParamCanvasWidth / analyserArrayLength;
+
+  let drawposX = 0;
+  for (let i = 0;i < analyserArrayLength;i++) {
+    const drawposY = pannerParamCanvasHeight - (analyserArray[i] / 255 * pannerParamCanvasHeight);
+
+    if (i == 0) {
+      pannerParamCanvasCtx.moveTo(drawposX, drawposY);
+    }
+    else {
+      pannerParamCanvasCtx.lineTo(drawposY, drawposY);
+    }
+    drawposX += sliceWidth;
+  }
+
+  pannerParamCanvasCtx.lineTo(pannerParamCanvasWidth, pannerParamCanvasHeight/2);
+}
 
 function initAudioContext() {
   document.removeEventListener(audioInitEventName, initAudioContext);
   audioContext = new AudioContext();
   masterGain = audioContext.createGain();
+  masterAnalyser = audioContext.createAnalyser();
+  analyserArrayLength = masterAnalyser.frequencyBinCount;
+  analyserArray = new Uint8Array(analyserArrayLength);
   masterGain.gain.value = 1;
-  masterGain.connect(audioContext.destination)
+  masterGain.connect(masterAnalyser);
+  masterAnalyser.connect(audioContext.destination);
   remoteAudio = new RemoteAudiosManager(audioContext, masterGain, 1, 10);
+  drawAnalyserCanvas();
 };
 
 const masterVolumeSlider = document.getElementById("master-volume");
@@ -41,22 +81,23 @@ masterVolumeSlider.oninput = () => {
 
 const audioSettingBtn = document.getElementById("filter-setting");
 const contentCover = document.getElementById("content-cover");
-const audioSettingDialog = document.getElementById("audio-setting-dialog");
+const dialogCloseBtn = document.getElementById("dialog-close-btn");
 
-console.log(contentCover);
 contentCover.style.display = "none";
 
 audioSettingBtn.onclick = () => {
   if (contentCover.style.display === "none") {
     contentCover.style.display = "block";
+    localAudio.setMictoMasterGain();
   }
 }
 
-contentCover.onclick = () => {
-  if (contentCover.style.display !== "none")contentCover.style.display = "none";
+dialogCloseBtn.onclick = () => {
+  if (contentCover.style.display !== "none") {
+    contentCover.style.display = "none";
+    localAudio.setMictoStream();
+  }
 }
-
-
 
 const memberVolumeSliderChangeListener = (event) => {
   const volumeSlider = event.target;
@@ -71,10 +112,10 @@ let streamAvatorPairObserver = {}
 
 const memberListManager = new MemberListManager(document.getElementById("room-members-container"), memberVolumeSliderChangeListener);
 
-const canvas = document.getElementById("target-canvas");
-const ctx = canvas.getContext("2d");
-const remoteImgDrawManager = new RemoteImgDrawManager(canvas, avatorWidth, avatorHeight);
-const draggableImage = new DraggableImage(canvas, selfImgUrl, avatorWidth, avatorHeight);
+const roomCanvas = document.getElementById("target-canvas");
+const roomCanvasCtx = roomCanvas.getContext("2d");
+const remoteImgDrawManager = new RemoteImgDrawManager(roomCanvas, avatorWidth, avatorHeight);
+const draggableImage = new DraggableImage(roomCanvas, selfImgUrl, avatorWidth, avatorHeight);
 
 
 const roomNameInput = document.getElementById("room-name-input");
@@ -110,7 +151,7 @@ const sfuRoomEventListeners = {
   peerLeave: (peerId) => {
     memberListManager.removeMembers([peerId]);
     remoteAudio.removeAudioNodes([peerId]);
-    ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+    roomCanvasCtx.clearRect(0, 0, roomCanvasWidth, roomCanvasHeight);
     draggableImage.render(draggableImage.x, draggableImage.y);
     remoteImgDrawManager.removeRemoteImg(peerId);
     delete streamAvatorPairObserver[peerId];
@@ -122,7 +163,7 @@ const sfuRoomEventListeners = {
     const peerIds = peerManager.joinedRoom.members;
     memberListManager.removeMembers(peerIds);
     remoteAudio.removeAudioNodes(peerIds);
-    ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+    roomCanvasCtx.clearRect(0, 0, roomCanvasWidth, roomCanvasHeight);
     draggableImage.render(draggableImage.x, draggableImage.y);
     remoteImgDrawManager.removeRemoteImgAll();
     streamAvatorPairObserver = {};
@@ -140,7 +181,7 @@ const sfuRoomEventListeners = {
       delete streamAvatorPairObserver[stream.peerId].imageUrl;
       streamAvatorPairObserver[stream.peerId].observed = true;
     }
-    else {
+    else if(!streamAvatorPairObserver[stream.peerId] || !streamAvatorPairObserver[stream.peerId].observed) {
       streamAvatorPairObserver[stream.peerId] = {};
       streamAvatorPairObserver[stream.peerId].stream = stream;
     }
@@ -148,7 +189,6 @@ const sfuRoomEventListeners = {
   data: ({ src, data }) => {
     if (data.type == "addImage") {
       // add to memberlist
-      console.log(src);
       memberListManager.assignImgSrc(src, data.imageUrl);
       // adjust Panning
       if (streamAvatorPairObserver[src] && streamAvatorPairObserver[src].stream) {
@@ -161,7 +201,7 @@ const sfuRoomEventListeners = {
         delete streamAvatorPairObserver[src].y;
         streamAvatorPairObserver[src].observed = true;
       }
-      else {
+      else if(!streamAvatorPairObserver[src] || !streamAvatorPairObserver[src].observed) {
         // add imgInfo to (stream, imageurl) observer
         streamAvatorPairObserver[src] = {};
         streamAvatorPairObserver[src].x = data.posX;
@@ -172,7 +212,7 @@ const sfuRoomEventListeners = {
     if (data.type == "drawEvent") {
       // redraw image
       if (streamAvatorPairObserver[src] && streamAvatorPairObserver[src].observed) {
-        ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+        roomCanvasCtx.clearRect(0, 0, roomCanvasWidth, roomCanvasHeight);
         remoteImgDrawManager.redrawRemoteImg(src, data.posX, data.posY);
         draggableImage.render(draggableImage.x, draggableImage.y);
         remoteAudio.adjustPanning(draggableImage.x, draggableImage.y, data.posX, data.posY, src);
@@ -201,8 +241,8 @@ function disconnect() {
 }
 
 function canvasOnMouseDown(e) {
-  const offsetX = canvas.getBoundingClientRect().left;
-  const offsetY = canvas.getBoundingClientRect().top;
+  const offsetX = roomCanvas.getBoundingClientRect().left;
+  const offsetY = roomCanvas.getBoundingClientRect().top;
 
 
   const canvasX = e.clientX - offsetX;
@@ -215,22 +255,22 @@ function canvasOnMouseDown(e) {
 }
 
 function canvasOnMouseMove(e) {
-  const offsetX = canvas.getBoundingClientRect().left;
-  const offsetY = canvas.getBoundingClientRect().top;
+  const offsetX = roomCanvas.getBoundingClientRect().left;
+  const offsetY = roomCanvas.getBoundingClientRect().top;
 
   const canvasX = e.clientX - offsetX;
   const canvasY = e.clientY - offsetY;
 
   if (draggableImage.dragging) {
-    ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+    roomCanvasCtx.clearRect(0, 0, roomCanvasWidth, roomCanvasHeight);
 
     if (remoteImgDrawManager) {
       remoteImgDrawManager.redrawRemoteImgsAll();
     }
     let nX = draggableImage.relX + canvasX;
     let nY = draggableImage.relY + canvasY;
-    nX = Math.min(Math.max(nX, 0), canvasWidth - avatorWidth);
-    nY = Math.min(Math.max(nY, 0), canvasHeight - avatorHeight);
+    nX = Math.min(Math.max(nX, 0), roomCanvasWidth - avatorWidth);
+    nY = Math.min(Math.max(nY, 0), roomCanvasHeight - avatorHeight);
     draggableImage.render(nX, nY);
   }
 }
@@ -252,8 +292,8 @@ function imgPosNotify() {
 
 document.getElementById("connect-btn").addEventListener("click", connect);
 document.getElementById("disconnect-btn").addEventListener("click", disconnect);
-canvas.addEventListener("mousemove", canvasOnMouseMove);
-canvas.addEventListener("mousedown", canvasOnMouseDown);
-canvas.addEventListener("mouseup", canvasOnMouseUp);
+roomCanvas.addEventListener("mousemove", canvasOnMouseMove);
+roomCanvas.addEventListener("mousedown", canvasOnMouseDown);
+roomCanvas.addEventListener("mouseup", canvasOnMouseUp);
 
 let intervalId = setInterval(imgPosNotify, 300);
