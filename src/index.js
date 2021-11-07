@@ -28,20 +28,56 @@ const pannerParamCanvas = document.getElementById("panner-param-canvas");
 const pannerParamCanvasCtx = pannerParamCanvas.getContext("2d");
 const pannerParamCanvasWidth = 450;
 const pannerParamCanvasHeight = 250;
+const pannerRadius = 400;
 const audioInitEventName = typeof document.ontouchend !== "undefined" ? "touchend" : "mouseup";
 document.addEventListener(audioInitEventName, initAudioContext);
 
+function initAudioContext() {
+  document.removeEventListener(audioInitEventName, initAudioContext);
+  audioContext = new AudioContext();
+  masterGain = audioContext.createGain();
+  masterAnalyser = audioContext.createAnalyser();
+  analyserArrayLength = masterAnalyser.frequencyBinCount; // default 2048
+  analyserArray = new Uint8Array(analyserArrayLength);
+  masterGain.gain.value = 1;
+  masterGain.connect(masterAnalyser);
+  masterAnalyser.connect(audioContext.destination);
+  remoteAudio = new RemoteAudiosManager(audioContext, masterGain, pannerRadius);
+  drawAnalyserCanvas();
+};
+
+const pannerParamSlider = document.getElementById("panner-paramslider");
+pannerParamSlider.oninput = () => {
+  const value = pannerParamSlider.value; 
+  remoteAudio.setPannerGainCoef(value);
+}
+
 function drawAnalyserCanvas() {
   requestAnimationFrame(drawAnalyserCanvas);
-  masterAnalyser.getByteTimeDomainData(analyserArray);
   pannerParamCanvasCtx.clearRect(0, 0, pannerParamCanvasWidth, pannerParamCanvasHeight);
+  const pannerGainCoef = pannerParamSlider.value;
+  const pannerGainDrawBaseHeight = pannerParamCanvasHeight * 3 / 4;
+  pannerParamCanvasCtx.lineWidth = 3;
+  pannerParamCanvasCtx.strokeStyle = "rgb(0, 0, 255)";
+  pannerParamCanvasCtx.beginPath();
+  pannerParamCanvasCtx.moveTo(0, pannerParamCanvasHeight - Math.exp(-1/pannerGainCoef) * pannerGainDrawBaseHeight);
+  for (let x = 0.1;x <= pannerParamCanvasWidth;x+=0.1) {
+    const d2 = Math.sqrt((pannerParamCanvasWidth / 2 - x) * (pannerParamCanvasWidth  / 2 - x));
+    const drawposY = pannerParamCanvasHeight - Math.exp(-d2 / (pannerParamCanvasWidth * pannerGainCoef/2)) * pannerGainDrawBaseHeight;
+    pannerParamCanvasCtx.lineTo(x, drawposY);
+  }
+  pannerParamCanvasCtx.stroke();
+
+
+  if (!masterAnalyser)return;
+  masterAnalyser.getByteTimeDomainData(analyserArray);
 
   pannerParamCanvasCtx.lineWidth = 2;
   pannerParamCanvasCtx.strokeStyle = "rgb(0, 0, 0)";
   pannerParamCanvasCtx.beginPath();
 
-  const sliceWidth = pannerParamCanvasWidth / analyserArrayLength;
 
+  const sliceWidth = pannerParamCanvasWidth / analyserArrayLength;
   let drawposX = 0;
   for (let i = 0;i < analyserArrayLength;i++) {
     const drawposY = pannerParamCanvasHeight - (analyserArray[i] / 255 * pannerParamCanvasHeight);
@@ -50,33 +86,27 @@ function drawAnalyserCanvas() {
       pannerParamCanvasCtx.moveTo(drawposX, drawposY);
     }
     else {
-      pannerParamCanvasCtx.lineTo(drawposY, drawposY);
+      pannerParamCanvasCtx.lineTo(drawposX, drawposY);
     }
     drawposX += sliceWidth;
   }
 
   pannerParamCanvasCtx.lineTo(pannerParamCanvasWidth, pannerParamCanvasHeight/2);
+  pannerParamCanvasCtx.stroke();
 }
 
-function initAudioContext() {
-  document.removeEventListener(audioInitEventName, initAudioContext);
-  audioContext = new AudioContext();
-  masterGain = audioContext.createGain();
-  masterAnalyser = audioContext.createAnalyser();
-  analyserArrayLength = masterAnalyser.frequencyBinCount;
-  analyserArray = new Uint8Array(analyserArrayLength);
-  masterGain.gain.value = 1;
-  masterGain.connect(masterAnalyser);
-  masterAnalyser.connect(audioContext.destination);
-  remoteAudio = new RemoteAudiosManager(audioContext, masterGain, 1, 10);
-  drawAnalyserCanvas();
-};
+
 
 const masterVolumeSlider = document.getElementById("master-volume");
-
 masterVolumeSlider.oninput = () => {
   const value = masterVolumeSlider.value;
   masterGain.gain.value = value;
+}
+
+const micInputVolumeSlider = document.getElementById("mic-input-volume");
+micInputVolumeSlider.oninput = () => {
+  const value = micInputVolumeSlider.value;
+  localAudio.adjustGain(value);
 }
 
 const audioSettingBtn = document.getElementById("filter-setting");
@@ -84,18 +114,17 @@ const contentCover = document.getElementById("content-cover");
 const dialogCloseBtn = document.getElementById("dialog-close-btn");
 
 contentCover.style.display = "none";
-
 audioSettingBtn.onclick = () => {
   if (contentCover.style.display === "none") {
     contentCover.style.display = "block";
-    localAudio.setMictoMasterGain();
+    if(localAudio)localAudio.connectMictoMasterGain();
   }
 }
 
 dialogCloseBtn.onclick = () => {
   if (contentCover.style.display !== "none") {
     contentCover.style.display = "none";
-    localAudio.setMictoStream();
+    if(localAudio)localAudio.disconnectMicfromMasterGain();
   }
 }
 
@@ -225,11 +254,10 @@ const sfuRoomEventListeners = {
   }
 };
 
-
 async function connect() {
   if (!localAudio) {
-    const localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    localAudio = new LocalAudioManager(localStream, audioContext);
+    localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    localAudio = new LocalAudioManager(localStream, audioContext, masterGain);
   }
   await peerManager.makePeer(selfPeerId, credential, apiKey);
   const roomName = roomNameInput.value;

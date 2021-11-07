@@ -1,10 +1,10 @@
 export default class RemoteAudio {
-  constructor (audioContext, masterGain, panningGainCoef, pannerCoef) {
+  constructor (audioContext, masterGain, pannerRadius) {
     this.audioContext = audioContext;
     this.masterGain = masterGain;
     this.remoteAudioNodes = {};
-    this.panningGainCoef = panningGainCoef;
-    this.pannerCoef = pannerCoef;
+    this.pannerRadius = pannerRadius;
+    this.pannerGainCoef = 1;
   }
 
   addAudioNode (stream, peerId) {
@@ -17,6 +17,7 @@ export default class RemoteAudio {
     const memberPannerNode = this.audioContext.createStereoPanner();
     const memberGainNode = this.audioContext.createGain();
     memberGainNode.gain.value = 1;
+    memberPanningGainNode.gain.value = 1;
 
     memberAudioElement.onloadedmetadata = () => {
       const memberSourceNode = this.audioContext.createMediaStreamSource(memberAudioElement.srcObject);
@@ -71,14 +72,13 @@ export default class RemoteAudio {
     const sign = dX > 0 ? 1 : -1;
     const dY = remoteY - localY;
     const d2 = Math.sqrt(dX * dX + dY * dY);
-    memberPanner.pan.value = this.clampPanValue(this.pannerCoef * sign * (dX * dX) / (1100 * 1100));
-    const gainValue = Math.exp(-d2 / 100) * this.panningGainCoef;
+    const panValue = dX == 0 ? 0 : sign * Math.abs((Math.PI / 2 -  Math.atan(dY / dX))) * 0.5;
+    memberPanner.pan.value = panValue;
+    const gainValue = Math.exp(-d2 / (this.pannerRadius  * this.pannerGainCoef));
     memberPanningGainNode.gain.value = gainValue;
   }
 
-  clampPanValue(value) {
-    if (value < -0.5)return -0.5;
-    else if(value > 0.5)return 0.5;
-    else return value;
+  setPannerGainCoef(pannerGainCoef) {
+    this.pannerGainCoef = pannerGainCoef;
   }
 }

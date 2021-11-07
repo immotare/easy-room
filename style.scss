@@ -101,10 +101,9 @@ main {
 
       #audio-setting-content-container {
         width: 100%;
-        background-color: rgb(76, 130, 231);
+        height: 360px;
         display: flex;
         #mic-input-volume-container {
-          background-color: rgb(70, 150, 150);
           width: 100px;
           #mic-input-volume {
             display: block;
@@ -136,6 +135,10 @@ main {
           }
         }
 
+        #mic-input-volume-container:hover {
+          background-color: rgb(230, 230, 230);
+        }
+
         #panner-paramslider-container {
           width: 500px;
           #panner-param-canvas {
@@ -164,6 +167,10 @@ main {
             text-align: center;
             font-size: 13px;
           }
+        }
+
+        #panner-paramslider-container:hover {
+          background-color: rgb(230, 230, 230);
         }
       }
     }
