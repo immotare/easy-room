@@ -22,7 +22,7 @@ skywayのシークレットキー
 skywayのapiキー
 
 #### ・ COOKIE_SECRET
-Cookieの検証用のキー、必要ないかもしれません
+Cookieの検証用のキー
 
 #### ・ SLACK_API_URL
 SlackのコールバックURL、client_id等各種パラメータをクエリに含めたもの
