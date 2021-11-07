@@ -19,10 +19,10 @@ Slack APIのBot userトークン(権限にusers.profile:readを設定)
 skywayのシークレットキー
 
 #### ・ SKYWAY_API_KEY
-skywayのapiキー
+skywayのAPIキー
 
 #### ・ COOKIE_SECRET
 Cookieの検証用のキー
 
 #### ・ SLACK_API_URL
-SlackのコールバックURL、client_id等各種パラメータをクエリに含めたもの
+Slack APIのコールバックURL、client_id等各種パラメータをクエリに含めたもの
