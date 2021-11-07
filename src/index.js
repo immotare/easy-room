@@ -256,7 +256,7 @@ const sfuRoomEventListeners = {
 
 async function connect() {
   if (!localAudio) {
-    localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
     localAudio = new LocalAudioManager(localStream, audioContext, masterGain);
   }
   await peerManager.makePeer(selfPeerId, credential, apiKey);

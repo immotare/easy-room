@@ -72,7 +72,7 @@ export default class RemoteAudio {
     const sign = dX > 0 ? 1 : -1;
     const dY = remoteY - localY;
     const d2 = Math.sqrt(dX * dX + dY * dY);
-    const panValue = dX == 0 ? 0 : sign * Math.abs((Math.PI / 2 -  Math.atan(dY / dX))) * 0.5;
+    const panValue = dX == 0 ? 0 : sign * Math.abs((Math.PI / 2 -  Math.atan(dY / dX))) * 0.3;
     memberPanner.pan.value = panValue;
     const gainValue = Math.exp(-d2 / (this.pannerRadius  * this.pannerGainCoef));
     memberPanningGainNode.gain.value = gainValue;

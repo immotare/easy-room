@@ -127,19 +127,19 @@ app.get('/auth', async function (req, res) {
 });
 
 // for testing script on client
-app.get('/testclient', function (req, res) {
-  const uuid = uuidv4();
-  const credentialInfo = makeCredentialInfo(`sample_user${req_count}`);
-  const userImgUrl = `${req_count % 3 + 1}.png`
-  const clientData = {
-    username: `sample_user${req_count}`,
-    userimgurl: userImgUrl,
-    credential: credentialInfo.credential,
-    peerid: credentialInfo.peerId,
-  };
-  res.render("./authenticated_client.ejs", { clientdata: clientData, apikey:skywayApiKey});
-  req_count++;
-});
+// app.get('/testclient', function (req, res) {
+//   const uuid = uuidv4();
+//   const credentialInfo = makeCredentialInfo(`sample_user${req_count}`);
+//   const userImgUrl = `circle_${req_count % 3 + 1}.png`
+//   const clientData = {
+//     username: `sample_user${req_count}`,
+//     userimgurl: userImgUrl,
+//     credential: credentialInfo.credential,
+//     peerid: credentialInfo.peerId,
+//   };
+//   res.render("./authenticated_client.ejs", { clientdata: clientData, apikey:skywayApiKey});
+//   req_count++;
+// });
 
 app.get('/assets/:filename', function (req, res) {
   if (!req.session)res.send("Invalid accessing.");
